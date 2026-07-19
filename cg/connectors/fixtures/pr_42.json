@@ -1,0 +1,23 @@
+{
+  "pull_request": {
+    "number": 42,
+    "title": "Add per-seat rate-limit guard",
+    "body": "Implements per-seat rate limiting so a fleet of agents can't exhaust a subscription seat.\n\nDecision: Add per-seat rate-limit guard for agents",
+    "head": {"sha": "9f2c1ab"}
+  },
+  "commits": [
+    {"sha": "9f2c1ab", "commit": {"message": "add per-seat rate-limit guard",
+                                   "author": {"name": "dima"}}}
+  ],
+  "reviews": [
+    {"id": 101, "user": {"login": "sarah"}, "state": "APPROVED",
+     "body": "LGTM — good pacing default.", "submitted_at": "2026-07-19T10:00:00Z",
+     "commit_id": "9f2c1ab"},
+    {"id": 102, "user": {"login": "marcus"}, "state": "CHANGES_REQUESTED",
+     "body": "Cap the default lower; 200 turns/hr is too generous per seat.",
+     "submitted_at": "2026-07-19T09:30:00Z", "commit_id": "9f2c1ab"},
+    {"id": 103, "user": {"login": "priya"}, "state": "COMMENTED",
+     "body": "Nit: log when a seat hits its window.", "submitted_at": "2026-07-19T09:45:00Z",
+     "commit_id": "9f2c1ab"}
+  ]
+}

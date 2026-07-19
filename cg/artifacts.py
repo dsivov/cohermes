@@ -27,8 +27,11 @@ def commit(sha: str, message: str, author: str) -> dict:
     return graph.upsert_entity(sha, "Commit", description=message, message=message, author=author)
 
 
-def review(name: str, verdict: str, reviewer: str, summary: str, pr: str | None = None) -> dict:
-    attrs = {"verdict": verdict, "reviewer": reviewer, "summary": summary}
+def review(name: str, reviewer: str, summary: str,
+           verdict: str | None = None, pr: str | None = None) -> dict:
+    attrs = {"reviewer": reviewer, "summary": summary}
+    if verdict:  # ontology enum: approved | changes_requested | rejected (GitHub COMMENTED → none)
+        attrs["verdict"] = verdict
     if pr:
         attrs["pr"] = pr
     return graph.upsert_entity(name, "Review", description=summary, **attrs)
