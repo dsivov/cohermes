@@ -106,6 +106,9 @@ def install(target: str, role: str = "developer") -> list[str]:
     except Exception:  # noqa: BLE001 - playbook is best-effort
         pass
     _write("CLAUDE.md", LOOP_CLAUDE_MD.format(workspace=config.WORKSPACE))
+    # pre-approve the CG MCP server so the agent can use it without a trust prompt
+    _write(os.path.join(".claude", "settings.local.json"),
+           json.dumps({"enableAllProjectMcpServers": True}, indent=2) + "\n")
     for name, body in COMMANDS.items():
         _write(os.path.join(".claude", "commands", name), body)
     return written
