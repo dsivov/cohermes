@@ -11,6 +11,7 @@ any real work — failing fast rather than spending tokens.
 
 Run:  python -m cg.auth        (report the current auth posture)
 """
+import json
 import os
 import shutil
 import subprocess
@@ -38,25 +39,34 @@ def scrubbed_env(base: dict | None = None) -> tuple[dict, list[str]]:
 
 def auth_status(env: dict | None = None) -> dict:
     """Query ``claude auth status`` and classify the active mode.
-    Returns {available, mode in {subscription, api, unknown, None}, raw}."""
+    Returns {available, mode in {subscription, api, none, unknown, None}, raw}.
+
+    Real output is JSON, e.g. {"loggedIn": true, "authMethod": "claude.ai",
+    "subscriptionType": "max", ...}; ``authMethod == "claude.ai"`` is subscription
+    OAuth, anything else while logged in implies an API/console credential."""
     if shutil.which("claude") is None:
         return {"available": False, "mode": None, "raw": "claude CLI not found on PATH"}
     try:
-        out = subprocess.run(
-            ["claude", "auth", "status", "--text"],
-            capture_output=True, text=True, timeout=30, env=env,
-        )
-        raw = (out.stdout + out.stderr).strip()
+        out = subprocess.run(["claude", "auth", "status"],
+                             capture_output=True, text=True, timeout=30, env=env)
+        raw = (out.stdout or out.stderr).strip()
     except Exception as e:  # noqa: BLE001 - report, don't crash the guard
         return {"available": True, "mode": None, "raw": f"error: {e}"}
-    low = raw.lower()
-    if "api key" in low and ("confirmed" in low or "active" in low):
-        mode = "api"
-    elif "subscription" in low or "logged in" in low or "oauth" in low:
-        mode = "subscription"
-    else:
-        mode = "unknown"
-    return {"available": True, "mode": mode, "raw": raw}
+    try:
+        j = json.loads(raw)
+        if not j.get("loggedIn"):
+            mode = "none"
+        elif j.get("authMethod") == "claude.ai":
+            mode = "subscription"
+        else:
+            mode = "api"
+        return {"available": True, "mode": mode, "raw": raw,
+                "subscription": j.get("subscriptionType"), "email": j.get("email")}
+    except json.JSONDecodeError:
+        low = raw.lower()
+        mode = "api" if ("api key" in low and "confirmed" in low) else (
+            "subscription" if "subscription" in low else "unknown")
+        return {"available": True, "mode": mode, "raw": raw}
 
 
 def preflight(strict: bool = True) -> dict:
@@ -80,7 +90,8 @@ if __name__ == "__main__":
     print("claude CLI available:", r["available"])
     print("auth mode:", r["mode"])
     if r["available"]:
-        print("verdict:", "OK — subscription" if r["ok"]
+        sub = f" ({r.get('subscription')})" if r.get("subscription") else ""
+        print("verdict:", f"OK — subscription{sub}" if r["ok"]
               else f"REVIEW — mode={r['mode']} (must be 'subscription')")
     else:
         print("verdict: cannot verify here (claude not installed on this box) —"
