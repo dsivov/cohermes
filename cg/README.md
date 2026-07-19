@@ -27,10 +27,34 @@ export COHERMES_CG_WORKSPACE=<your-project>
 python -m cg.ontology     # install the shared ontology (idempotent)
 ```
 
+## The loop (per developer)
+
+```bash
+python -m cg.preset ./my-repo    # writes .mcp.json + CLAUDE.md loop + slash-commands
+python -m cg.auth                # assert Claude runs on your subscription, not API billing
+```
+Then the agent follows: **orient → query-before-build → work → record-the-why**, all
+through the `context-graph` MCP tools.
+
+## Cross-agent sync (pull-only, reuses Hermes cron)
+
+Hermes has no agent↔agent bus, so sync is **pull**: `cg/watch.py` polls the graph,
+diffs a cursor, and prints what teammates changed. A Hermes routine runs it:
+
+```bash
+hermes cron create "every 15m" \
+  "Summarize what teammates changed in the Context Graph, then post it." \
+  --script ~/.hermes/scripts/watch-context-graph.py --deliver slack
+```
+
 ## Status
 
-Milestone **M1 (shared ontology)** — done. Next: M2 (the CG-native agent loop
-preset), M3 (fill the four artifacts + GitHub review connector), M4 (wire into the
-Hermes runtime + the pull-sync watcher).
+Milestones **M1 (ontology)**, **M2 (loop preset + auth guard)**, **M3 (four artifacts
++ GitHub review connector)**, **M4 (pull-sync watcher)** — done. The full chain
+`Decision→Task→Commit→Review→Decision` records, cross-links, and traces; a teammate's
+agent finds prior decisions via precedent search instead of re-deriving them.
+
+Later: swap Hermes's per-user `MEMORY.md` for CG as the memory provider (deeper
+runtime integration).
 
 Design log & decisions: `Context_Graph/docs/TEAM_AGENT_FRAMEWORK.html`.
