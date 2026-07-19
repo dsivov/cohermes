@@ -18,6 +18,10 @@ from cg import config
 LOOP_CLAUDE_MD = """\
 # cohermes — shared-brain loop
 
+**You act for developer `{developer}` (role: {role}).** Stamp every decision, task,
+and review you record with `{developer}` (`approved_by` / `assignee` / `reviewer`),
+so teammates know who did what.
+
 This project shares its knowledge through a team **Context Graph** (workspace
 `{workspace}`) over the `context-graph` MCP server. You are one of several agents
 on this project; the graph is how you stay in sync with the rest of the team.
@@ -88,8 +92,9 @@ def fetch_playbook(role: str = "developer") -> str:
     return r.text
 
 
-def install(target: str, role: str = "developer") -> list[str]:
+def install(target: str, role: str = "developer", developer: str | None = None) -> list[str]:
     """Write the loop preset into *target*. Returns the list of files written."""
+    developer = developer or config.DEVELOPER or "this developer"
     boot = fetch_bootstrap(role)
     written = []
 
@@ -105,7 +110,8 @@ def install(target: str, role: str = "developer") -> list[str]:
         _write("cg/PLAYBOOK.md", fetch_playbook(role))
     except Exception:  # noqa: BLE001 - playbook is best-effort
         pass
-    _write("CLAUDE.md", LOOP_CLAUDE_MD.format(workspace=config.WORKSPACE))
+    _write("CLAUDE.md", LOOP_CLAUDE_MD.format(
+        workspace=config.WORKSPACE, developer=developer, role=role))
     # pre-approve the CG MCP server so the agent can use it without a trust prompt
     _write(os.path.join(".claude", "settings.local.json"),
            json.dumps({"enableAllProjectMcpServers": True}, indent=2) + "\n")
@@ -118,9 +124,12 @@ def main():
     ap = argparse.ArgumentParser(description="Install the cohermes CG-native loop preset")
     ap.add_argument("target", help="project directory to install into")
     ap.add_argument("--role", default="developer")
+    ap.add_argument("--developer", default=None, help="who this agent acts for (D2 identity)")
     args = ap.parse_args()
-    written = install(args.target, args.role)
-    print(f"installed cohermes loop preset into {args.target} (workspace={config.WORKSPACE}):")
+    written = install(args.target, args.role, args.developer)
+    dev = args.developer or config.DEVELOPER or "this developer"
+    print(f"installed cohermes loop preset into {args.target} "
+          f"(workspace={config.WORKSPACE}, developer={dev}):")
     for w in written:
         print("  +", w)
     print("\nnext: (re)connect the MCP client, then run /cg-orient")
