@@ -1,0 +1,8 @@
+name: cohermes
+description: >
+  Wire the team's shared Context Graph into the Hermes runtime. On agent:start it
+  asserts subscription auth (A2) and briefs the agent from the shared brain
+  (orient / read-from-brain) so it begins aligned with the team's decisions and
+  learnings — the Hermes-native counterpart to the cohermes MCP tools.
+events:
+  - agent:start
