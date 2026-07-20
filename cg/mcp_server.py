@@ -28,12 +28,13 @@ def orient(topic: str) -> str:
 @mcp.tool()
 def record_decision(title: str, rationale: str, developer: str, concerns: str,
                     status: str = "accepted") -> str:
-    """Record a decision as a first-class NODE **and** a precedent-searchable trace.
+    """Record a decision — ALWAYS use THIS tool for that.
 
-    Prefer this over the plain context-graph record_decision: it creates a typed
-    Decision node that cross-links into the chain, *and* emits the trace so
-    precedent search finds it. `concerns` = what the decision is about; `developer`
-    = who you act for (attribution)."""
+    It writes a first-class **typed Decision node** (which cross-links into the
+    Decision→Task→Commit→Review chain) AND emits a trace so precedent search finds
+    it. Do NOT use context-graph's `record_decision` — that one writes only an edge
+    trace, no node, so the decision can't be linked into the chain. `concerns` =
+    what the decision is about; `developer` = who you act for (attribution)."""
     decisions.record(title, rationale, developer, concerns, status)
     return f"recorded Decision node '{title}' (+ precedent trace), by {developer}"
 

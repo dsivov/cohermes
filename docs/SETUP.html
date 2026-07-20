@@ -243,6 +243,7 @@ hermes                    <span class="cm"># run Hermes; the hook fires on each 
       <tr><td>Agent uses metered API billing</td><td><code>unset ANTHROPIC_API_KEY</code> (and cloud-provider vars); <code>claude auth status</code> must show <code>claude.ai</code>. <code>cohermes-agent</code> hard-stops on this.</td></tr>
       <tr><td>MCP server "pending approval"</td><td>the preset writes <code>.claude/settings.local.json</code> with <code>enableAllProjectMcpServers</code>; run <code>claude</code> once to approve if needed.</td></tr>
       <tr><td><code>cg</code> import error / MCP won't start</td><td>ensure you <code>pip install -e .</code> (not just a checkout) — that removes the PYTHONPATH requirement.</td></tr>
+      <tr><td>Agent says "no cohermes tools are exposed" / falls back to context-graph's <code>record_decision</code> (trace, no node)</td><td>the cohermes stdio MCP server failed to start — almost always a missing <code>mcp</code> package. Confirm with <code>claude mcp list</code> (both <code>context-graph</code> and <code>cohermes</code> must appear) and <code>python -m cg.mcp_server</code>. Do a full <code>pip install -e .</code> (<strong>not</strong> <code>--no-deps</code>) so <code>mcp</code> + <code>requests</code> are installed.</td></tr>
       <tr><td>Empty <code>orient</code> brief</td><td>seed the brain first — <code>cohermes-ontology</code> + <code>cohermes-backfill</code>, and record a decision or two.</td></tr>
     </tbody>
   </table></div>

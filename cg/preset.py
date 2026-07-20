@@ -35,11 +35,12 @@ Follow this loop for every task:
    whether the team has already decided or done this. **Reuse the reasoning; do not
    re-derive it.** Cite what you find.
 3. **Work** — implement, staying inside the ontology and guardrails.
-4. **Record the why** — when you make a decision, call the **cohermes**
-   `record_decision` (a node + trace: cross-linkable *and* precedent-searchable) with
-   a clear `title`, `rationale`, `status`, `concerns`, and the **`developer`** you act
-   for. Build the chain with `record_task`/`record_commit`/`record_review` + `link`
-   (`motivates`/`implemented_by`/`reviewed_in`/`enacts`).
+4. **Record the why** — record decisions ONLY with the **cohermes** `record_decision`
+   tool (it writes a typed Decision *node* + a trace). **Do NOT use context-graph's
+   `record_decision`** — that writes a trace with no node, so it can't link into the
+   chain. Pass a clear `title`, `rationale`, `status`, `concerns`, and the
+   **`developer`** you act for. Build the chain with `record_task`/`record_commit`/
+   `record_review` + `link` (`motivates`/`implemented_by`/`reviewed_in`/`enacts`).
 5. **Add depth** — when you learn or write something about the project's
    architecture, design, or status, call `ingest_context` so it becomes retrievable
    prose in the shared brain — not just a one-line decision. Teammates' agents will
@@ -76,10 +77,10 @@ nothing exists, say so explicitly.
 description: Record a decision (the why) into the shared graph
 argument-hint: <decision + rationale>
 ---
-Record this decision into the shared Context Graph with the `record_decision` MCP
-tool: a clear `title`, the `rationale` (the *why*), a `status`, and the `developer`
-you are acting for. Decision: **$ARGUMENTS**. Confirm it was written so teammates'
-agents can find it.
+Record this decision with the **cohermes** `record_decision` tool (it writes a typed
+Decision node + trace) — NOT context-graph's `record_decision`. Pass a clear `title`,
+the `rationale` (the *why*), a `status`, `concerns`, and the `developer` you are
+acting for. Decision: **$ARGUMENTS**. Confirm it was written.
 """,
 }
 
@@ -129,9 +130,13 @@ def install(target: str, role: str = "developer", developer: str | None = None) 
         pass
     _write("CLAUDE.md", LOOP_CLAUDE_MD.format(
         workspace=config.WORKSPACE, developer=developer, role=role))
-    # pre-approve the CG MCP server so the agent can use it without a trust prompt
+    # pre-approve the CG MCP server; and DENY context-graph's trace-only
+    # record_decision so agents can only record via the cohermes node+trace tool.
     _write(os.path.join(".claude", "settings.local.json"),
-           json.dumps({"enableAllProjectMcpServers": True}, indent=2) + "\n")
+           json.dumps({"enableAllProjectMcpServers": True,
+                       "permissions": {"deny": [
+                           "mcp__context-graph__record_decision",
+                           "mcp__context_graph__record_decision"]}}, indent=2) + "\n")
     for name, body in COMMANDS.items():
         _write(os.path.join(".claude", "commands", name), body)
     return written
