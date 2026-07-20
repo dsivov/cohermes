@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/assets/banner.png" alt="cohermes — a team of AI coding agents that share one brain" width="100%"></p>
+
 # cohermes
 
 **A team of AI coding agents that share one brain.**
