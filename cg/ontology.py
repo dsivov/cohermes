@@ -110,10 +110,14 @@ def summary() -> dict:
                         timeout=30).json()
 
 
-if __name__ == "__main__":
+def main():
     print(f"installing ontology into '{config.WORKSPACE}' @ {config.SERVER_URL} ...")
     install()
     s = summary()
     print("object types:", [o["name"] for o in s.get("object_types", [])])
     print("link types  :", [f"{l['name']} ({'/'.join(l['source_types'])}→{'/'.join(l['target_types'])})"
                             for l in s.get("link_types", [])])
+
+
+if __name__ == "__main__":
+    main()

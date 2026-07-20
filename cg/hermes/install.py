@@ -22,7 +22,11 @@ def install(hermes_home: str | None = None) -> pathlib.Path:
     return dst
 
 
-if __name__ == "__main__":
+def main():
     dst = install()
     print(f"installed cohermes Hermes hook → {dst}")
-    print("ensure the cohermes repo root is on PYTHONPATH for the Hermes process.")
+    print("(a proper `pip install -e .` of cohermes makes PYTHONPATH unnecessary.)")
+
+
+if __name__ == "__main__":
+    main()

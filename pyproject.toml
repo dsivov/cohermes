@@ -308,6 +308,12 @@ all = [
 hermes = "hermes_cli.main:main"
 hermes-agent = "run_agent:main"
 hermes-acp = "acp_adapter.entry:main"
+# cohermes — the Context Graph extension
+cohermes-mcp = "cg.mcp_server:main"
+cohermes-preset = "cg.preset:main"
+cohermes-backfill = "cg.backfill:main"
+cohermes-ontology = "cg.ontology:main"
+cohermes-install-hook = "cg.hermes.install:main"
 
 [tool.setuptools]
 py-modules = ["run_agent", "model_tools", "toolsets", "batch_runner", "trajectory_compressor", "toolset_distributions", "cli", "hermes_bootstrap", "hermes_constants", "hermes_state", "hermes_time", "hermes_logging", "utils", "mcp_serve"]
@@ -336,6 +342,7 @@ locales = ["locales/*.yaml"]
 "optional-mcps/n8n" = ["optional-mcps/n8n/manifest.yaml"]
 
 [tool.setuptools.package-data]
+cg = ["hermes/HOOK.yaml", "connectors/fixtures/*.json", "README.md"]
 hermes_cli = ["web_dist/**/*", "tui_dist/**/*", "scripts/install.sh", "scripts/install.ps1"]
 gateway = ["assets/**/*"]
 plugins = [
@@ -354,7 +361,7 @@ plugins = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["agent", "agent.*", "tools", "tools.*", "hermes_cli", "hermes_cli.*", "gateway", "gateway.*", "tui_gateway", "tui_gateway.*", "cron", "cron.*", "acp_adapter", "plugins", "plugins.*", "providers", "providers.*"]
+include = ["agent", "agent.*", "tools", "tools.*", "hermes_cli", "hermes_cli.*", "gateway", "gateway.*", "tui_gateway", "tui_gateway.*", "cron", "cron.*", "acp_adapter", "plugins", "plugins.*", "providers", "providers.*", "cg", "cg.*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

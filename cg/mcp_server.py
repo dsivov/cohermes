@@ -105,5 +105,9 @@ def whoami() -> str:
     return f"workspace={config.WORKSPACE}, developer={config.DEVELOPER or 'unset'}"
 
 
-if __name__ == "__main__":
+def main():
     mcp.run()
+
+
+if __name__ == "__main__":
+    main()
