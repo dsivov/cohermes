@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cohermes — Setup Guide</title>
+<style>
+:root{--bg:#0f1117;--panel:#1b1f2a;--panel2:#222736;--ink:#e7ebf3;--ink-soft:#aab3c5;--ink-faint:#7b8499;
+--line:#2c3346;--line-soft:#232a3a;--a:#5b8def;--b:#19b89a;--c:#f0a73c;--ctrl:#22c3d6;--ok:#3ecf8e;--danger:#ef5b6e;
+--mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;--maxw:1080px;--radius:14px;
+--shadow:0 10px 30px rgba(0,0,0,.35);}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(1100px 600px at 82% -10%,rgba(34,195,214,.10),transparent 60%),
+radial-gradient(900px 520px at -10% 8%,rgba(25,184,154,.08),transparent 55%),var(--bg);
+color:var(--ink);font:16px/1.7 "Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif}
+a{color:var(--a);text-decoration:none}a:hover{text-decoration:underline}
+code,pre,.mono{font-family:var(--mono)}svg{max-width:100%;height:auto}
+.hero{padding:64px 22px 30px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(34,195,214,.07),transparent)}
+.hero-inner{max-width:880px;margin:0 auto}
+.eyebrow{letter-spacing:.22em;text-transform:uppercase;font-size:12px;color:var(--ink-faint);font-weight:700}
+.hero h1{font-size:clamp(30px,5vw,48px);margin:.3em 0 .2em;background:linear-gradient(92deg,#bdf0ea,#8fb4d9 55%,#a7ecf5);
+-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{font-size:clamp(16px,2vw,20px);color:var(--ink-soft)}
+.layout{max-width:var(--maxw);margin:0 auto;display:grid;grid-template-columns:220px 1fr;gap:38px;padding:28px 22px 90px}
+nav.toc{position:sticky;top:16px;align-self:start;max-height:calc(100vh - 32px);overflow:auto;border:1px solid var(--line);
+border-radius:var(--radius);background:var(--panel);padding:12px}
+nav.toc .tl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin:4px 6px 8px}
+nav.toc ol{list-style:none;margin:0;padding:0;counter-reset:t}nav.toc li{counter-increment:t}
+nav.toc a{display:flex;gap:8px;padding:5px 8px;border-radius:8px;color:var(--ink-soft);font-size:13px}
+nav.toc a::before{content:counter(t,decimal-leading-zero);color:var(--ink-faint);font-family:var(--mono);font-size:11px}
+nav.toc a:hover{background:var(--panel2);color:var(--ink);text-decoration:none}
+main{min-width:0;max-width:760px}section{margin:0 0 46px;scroll-margin-top:18px}
+h2{font-size:clamp(21px,3vw,28px);margin:0 0 6px}h3{font-size:18px;margin:24px 0 6px}
+.kick{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ctrl);font-weight:700;margin-bottom:6px}
+p{margin:.6em 0}.small{font-size:13.5px;color:var(--ink-faint)}
+pre{background:#0c0e14;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow:auto;font-size:13px;line-height:1.55}
+pre code{color:#d6deec}.cm{color:#5c6685}.kw{color:#7aa2f7}.str{color:#9ece6a}
+code:not(pre code){background:#161922;border:1px solid var(--line-soft);border-radius:5px;padding:1px 5px;font-size:13px}
+.callout{border-radius:12px;padding:13px 15px;border:1px solid var(--line);background:var(--panel2);margin:16px 0}
+.callout .cl{font-weight:700;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+.callout.key{border-color:rgba(34,195,214,.55);background:rgba(34,195,214,.10)}.callout.key .cl{color:#8fe6f2}
+.callout.ok{border-color:rgba(62,207,142,.5);background:rgba(62,207,142,.08)}.callout.ok .cl{color:#7ee3b4}
+.callout.warn{border-color:rgba(240,167,60,.5);background:rgba(240,167,60,.08)}.callout.warn .cl{color:#ffce86}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px;margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th{background:var(--panel2);text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--ink-soft)}
+td{padding:9px 11px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+.fig{background:#12151d;border:1px solid var(--line-soft);border-radius:12px;padding:15px;margin:16px 0}
+.step{display:inline-block;background:rgba(34,195,214,.16);color:#8fe6f2;border:1px solid rgba(34,195,214,.4);
+border-radius:999px;font-size:12px;font-weight:700;padding:1px 10px;margin-right:8px}
+.footer{max-width:var(--maxw);margin:0 auto;padding:26px 22px 60px;color:var(--ink-faint);font-size:13px;border-top:1px solid var(--line)}
+@media(max-width:900px){.layout{grid-template-columns:1fr}nav.toc{display:none}main{max-width:none}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="hero-inner">
+  <div class="eyebrow">cohermes · setup guide</div>
+  <h1>Set up cohermes</h1>
+  <p class="lede">Install the fork, point it at your team's Context Graph, wire each developer's agent, and
+  run the shared-brain loop — with a straight answer on the Claude-CLI integration mode.</p>
+</div></header>
+
+<div class="layout">
+<nav class="toc"><div class="tl">Steps</div><ol>
+  <li><a href="#prereq">Prerequisites</a></li>
+  <li><a href="#install">Install cohermes</a></li>
+  <li><a href="#brain">Connect the shared brain</a></li>
+  <li><a href="#mode">Integration mode: -p vs tmux</a></li>
+  <li><a href="#dev">Per-developer setup</a></li>
+  <li><a href="#run">Run an agent</a></li>
+  <li><a href="#hook">The Hermes hook</a></li>
+  <li><a href="#two">Two-developer walkthrough</a></li>
+  <li><a href="#ui">The UI</a></li>
+  <li><a href="#trouble">Troubleshooting</a></li>
+</ol></nav>
+
+<main>
+
+<section id="prereq">
+  <div class="kick">Before you start</div>
+  <h2>Prerequisites</h2>
+  <ul>
+    <li>A running <b>Context Graph</b> server (the backend), e.g. <code>http://10.0.0.80:9621</code>.</li>
+    <li><b>Claude Code</b> installed and logged in on a <b>Pro / Max / Team subscription</b> — not an API key.
+      Check: <code>claude auth status</code> should show <code>"authMethod": "claude.ai"</code>.</li>
+    <li><b>Python 3.12</b>. For the Hermes-orchestrated flow, also the Hermes prerequisites (a model provider).</li>
+  </ul>
+  <div class="callout key"><div class="cl">The mental model</div>
+    <b>One project = one shared Context Graph workspace</b> (the team brain). Every developer runs their own
+    Claude Code agent locally; all agents read from and write to that one workspace. cohermes is the glue —
+    a small <code>cg/</code> package + a local MCP server + a Hermes hook.</div>
+</section>
+
+<section id="install">
+  <div class="kick"><span class="step">1</span>install</div>
+  <h2>Install cohermes (each developer)</h2>
+  <pre><code><span class="cm"># clone the fork and install — this brings Hermes AND the cg extension</span>
+git clone https://github.com/dsivov/cohermes && cd cohermes
+python -m venv .venv &amp;&amp; . .venv/bin/activate
+pip install -e .</code></pre>
+  <p>This gives the commands: <code>cohermes-agent</code>, <code>cohermes-mcp</code>,
+  <code>cohermes-preset</code>, <code>cohermes-backfill</code>, <code>cohermes-ontology</code>,
+  <code>cohermes-install-hook</code> — plus the <code>hermes</code> CLI. The <code>cg</code> package imports
+  with no <code>PYTHONPATH</code> once installed.</p>
+</section>
+
+<section id="brain">
+  <div class="kick"><span class="step">2</span>connect</div>
+  <h2>Connect to the shared brain</h2>
+  <pre><code><span class="cm"># point at your CG server + the project's workspace</span>
+export COHERMES_CG_URL=http://&lt;cg-host&gt;:9621
+export COHERMES_CG_WORKSPACE=&lt;your-project&gt;
+
+cohermes-ontology                          <span class="cm"># install the shared ontology (once, any dev)</span>
+cohermes-backfill /path/to/project --docs README.md   <span class="cm"># optional: seed the brain (curated)</span></code></pre>
+  <p class="small">The ontology defines the shared shape (Decision · Task · Commit · Review · Insight ·
+  Module + their links). Backfill is <i>curated</i> — it ingests module purposes + design docs, not raw code.</p>
+</section>
+
+<section id="mode">
+  <div class="kick"><span class="step">3</span>the key decision</div>
+  <h2>Integration mode: <code>claude -p</code> vs tmux</h2>
+  <p>There are <b>two separate sessions</b>: Hermes's own session (state in <code>~/.hermes</code>) and
+  <b>Claude Code's session</b> (its own conversation/context, which Claude Code stores and can resume). How
+  context reaches Claude depends on the mode.</p>
+
+  <div class="fig">
+  <svg viewBox="0 0 780 300" role="img" aria-label="How context flows in -p vs tmux mode">
+    <defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#7b8499"/></marker>
+    <marker id="ac" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#22c3d6"/></marker></defs>
+    <style>.b{fill:#1b1f2a;stroke:#2c3346;rx:9}.t{fill:#e7ebf3;font:600 12px "Segoe UI"}.s{fill:#8a93a6;font:10px "Segoe UI"}
+    .l{fill:#7b8499;font:italic 10px "SF Mono",monospace}.ln{stroke:#3a4256;stroke-width:1.5;fill:none;marker-end:url(#ah)}
+    .lc{stroke:#22c3d6;stroke-width:1.5;fill:none;marker-end:url(#ac)}</style>
+    <text class="l" x="16" y="22">-p (print) — stateless per call</text>
+    <rect class="b" x="16" y="30" width="120" height="44"/><text class="t" x="30" y="50">Hermes</text><text class="s" x="30" y="65">/ cohermes-agent</text>
+    <path class="ln" d="M136,52 L 250,52"/><text class="l" x="150" y="44">claude -p + brief</text>
+    <rect class="b" x="252" y="30" width="150" height="44" stroke="#5b8def"/><text class="t" x="266" y="50">claude -p</text><text class="s" x="266" y="65">fresh context each call</text>
+    <text class="s" x="420" y="46">continuity only via <tspan fill="#9cc0ff">--resume &lt;id&gt;</tspan>;</text>
+    <text class="s" x="420" y="62">one -p call = a full agentic task</text>
+
+    <text class="l" x="16" y="122">tmux (interactive) — persistent session</text>
+    <rect class="b" x="16" y="130" width="120" height="44"/><text class="t" x="30" y="150">Hermes</text><text class="s" x="30" y="165">send-keys / capture</text>
+    <path class="ln" d="M136,152 L 250,152"/><text class="l" x="150" y="144">new turns</text>
+    <rect class="b" x="252" y="130" width="150" height="44" stroke="#5b8def"/><text class="t" x="266" y="150">claude (live)</text><text class="s" x="266" y="165">keeps its own history</text>
+    <path class="ln" d="M402,140 C 440,120 440,182 402,164"/><text class="l" x="420" y="150">remembers</text>
+    <text class="s" x="470" y="152">Hermes never re-sends history</text>
+
+    <!-- shared brain -->
+    <rect class="b" x="180" y="212" width="420" height="70" stroke="#22c3d6"/>
+    <text class="t" x="196" y="234" fill="#8fe6f2">The shared brain (Context Graph)</text>
+    <text class="s" x="196" y="252">durable, cross-session context — injected via orient, recorded back</text>
+    <text class="s" x="196" y="268">the per-session Claude context is transient; this is what persists</text>
+    <path class="lc" d="M320,212 C 320,150 320,110 328,78"/><text class="l" x="330" y="150" fill="#8fe6f2">orient → agent</text>
+  </svg>
+  </div>
+
+  <div class="tablewrap"><table>
+    <thead><tr><th></th><th><code>-p</code> (print)</th><th>tmux (interactive)</th></tr></thead>
+    <tbody>
+      <tr><td>Claude context</td><td>fresh per call (unless <code>--resume</code>)</td><td>persists in the live session</td></tr>
+      <tr><td>How context arrives</td><td>you inject it (prompt · <code>--append-system-prompt</code> · <code>--resume</code>)</td><td>Claude keeps it; Hermes relays new turns</td></tr>
+      <tr><td>Best for</td><td>task-scoped automation, CI, one-shot</td><td>a developer's live multi-turn session</td></tr>
+      <tr><td>Brief injection</td><td>clean, at launch (<code>cohermes-agent</code>)</td><td>at session start; re-<code>orient</code> mid-session</td></tr>
+      <tr><td>Orchestration</td><td>simple</td><td>heavier (send-keys / dialog handling)</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout ok"><div class="cl">Recommendation — <code>-p</code> as primary</div>
+    Use <b><code>-p</code> with the brief injected at launch</b> (that's <code>cohermes-agent</code>): one call
+    per task, the agent starts aligned, and cross-task continuity comes from <b>the brain</b>, not the session.
+    Reach for <b>tmux</b> when a developer wants a live, multi-turn Claude session — inject the brief at start
+    and keep <code>orient</code> available as an MCP tool. Either way, <b>durable knowledge lives in Context
+    Graph</b>, so you never depend on Hermes-session-history reaching Claude.</div>
+</section>
+
+<section id="dev">
+  <div class="kick"><span class="step">4</span>per developer</div>
+  <h2>Wire each developer's project (distinct identity)</h2>
+  <pre><code><span class="cm"># Alice</span>
+COHERMES_DEVELOPER=alice cohermes-preset /path/to/repo-A --developer alice
+<span class="cm"># Bob</span>
+COHERMES_DEVELOPER=bob   cohermes-preset /path/to/repo-B --developer bob</code></pre>
+  <p>Each repo gets a <code>.mcp.json</code> (the <code>context-graph</code> + local <code>cohermes</code> MCP
+  servers), a <code>CLAUDE.md</code> loop stamped with that developer, the <code>/cg-*</code> slash-commands,
+  and MCP pre-approval. Writes are attributed to that developer (D2).</p>
+</section>
+
+<section id="run">
+  <div class="kick"><span class="step">5</span>run</div>
+  <h2>Run an agent</h2>
+  <h3>Pre-briefed (recommended)</h3>
+  <pre><code>cd /path/to/repo-A
+cohermes-agent "add a gitlab review source"          <span class="cm"># interactive, pre-briefed from the brain</span>
+cohermes-agent -p "how should we test a connector?"  <span class="cm"># one-shot</span></code></pre>
+  <p><code>cohermes-agent</code> runs the subscription-auth preflight, fetches the orient brief, and launches
+  Claude Code with it injected — so the agent begins with the team's decisions + learnings automatically.</p>
+  <h3>Plain Claude Code (the tools are still there)</h3>
+  <pre><code>cd /path/to/repo-A &amp;&amp; claude
+<span class="cm"># then, in-session:</span>
+/cg-orient "webhook connector auth"   <span class="cm"># brief yourself from the brain</span>
+<span class="cm"># the cohermes MCP tools: record_decision, record_task/commit/review, link,</span>
+<span class="cm"># ingest_context, record_learning, orient</span></code></pre>
+</section>
+
+<section id="hook">
+  <div class="kick"><span class="step">6</span>hermes runtime</div>
+  <h2>The Hermes hook (optional, for Hermes-orchestrated flow)</h2>
+  <pre><code>cohermes-install-hook     <span class="cm"># → ~/.hermes/hooks/cohermes/ (auth preflight + orient @ agent:start)</span>
+hermes                    <span class="cm"># run Hermes; the hook fires on each task</span></code></pre>
+  <p>On <code>agent:start</code> the hook asserts subscription auth and writes the orient brief to
+  <code>$HERMES_HOME/cohermes/brief-&lt;session&gt;.md</code>. (Hermes hooks are side-effect only; for automatic
+  prompt-injection, prefer <code>cohermes-agent</code>, which injects the brief at launch.)</p>
+</section>
+
+<section id="two">
+  <div class="kick"><span class="step">7</span>the payoff</div>
+  <h2>Two-developer walkthrough</h2>
+  <p><b>Alice</b> (repo-A): <code>cohermes-agent "choose webhook auth"</code> — her agent decides OAuth 2.0
+  and records it (<code>record_decision</code>, stamped <code>alice</code>).</p>
+  <p><b>Bob</b> (repo-B, later): <code>cohermes-agent "implement webhook token refresh"</code> — his agent is
+  <b>pre-briefed</b>, sees Alice's OAuth decision, and builds on it (cites her, doesn't re-derive), recording
+  its own follow-on stamped <code>bob</code>.</p>
+  <div class="callout key"><div class="cl">Success</div>Two developers' work lands in <b>one</b> attributed
+  graph; Bob's agent <b>reuses</b> Alice's decision; everything runs on <b>subscription</b> auth; the chain is
+  traceable and learnings retrievable.</div>
+</section>
+
+<section id="ui">
+  <div class="kick"><span class="step">8</span>see it</div>
+  <h2>The UI</h2>
+  <p>Open the Context Graph <b>WebUI</b>: <code>http://&lt;cg-host&gt;:9621/webui</code> (workspace
+  <code>&lt;your-project&gt;</code>). Watch both developers' decisions, the
+  <code>Decision→Task→Commit→Review</code> chain, and <code>Insight</code> learnings appear in one graph. If
+  you orchestrate through Hermes, its TUI / web dashboard is the agent UI.</p>
+</section>
+
+<section id="trouble">
+  <div class="kick">if something's off</div>
+  <h2>Troubleshooting</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Symptom</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td>Agent uses metered API billing</td><td><code>unset ANTHROPIC_API_KEY</code> (and cloud-provider vars); <code>claude auth status</code> must show <code>claude.ai</code>. <code>cohermes-agent</code> hard-stops on this.</td></tr>
+      <tr><td>MCP server "pending approval"</td><td>the preset writes <code>.claude/settings.local.json</code> with <code>enableAllProjectMcpServers</code>; run <code>claude</code> once to approve if needed.</td></tr>
+      <tr><td><code>cg</code> import error / MCP won't start</td><td>ensure you <code>pip install -e .</code> (not just a checkout) — that removes the PYTHONPATH requirement.</td></tr>
+      <tr><td>Empty <code>orient</code> brief</td><td>seed the brain first — <code>cohermes-ontology</code> + <code>cohermes-backfill</code>, and record a decision or two.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+</main>
+</div>
+<footer class="footer">cohermes — setup guide · a fork of <a href="https://github.com/NousResearch/hermes-agent">hermes-agent</a> (MIT) · design log in <code>Context_Graph/docs/TEAM_AGENT_FRAMEWORK.html</code></footer>
+</body>
+</html>
