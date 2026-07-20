@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cohermes — docs</title>
+<style>
+:root{--bg:#0f1117;--panel:#1b1f2a;--panel2:#222736;--ink:#e7ebf3;--ink-soft:#aab3c5;--ink-faint:#7b8499;
+--line:#2c3346;--line-soft:#232a3a;--a:#5b8def;--ctrl:#22c3d6;--ok:#3ecf8e;--mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;--maxw:960px;}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(1100px 600px at 82% -10%,rgba(34,195,214,.10),transparent 60%),
+radial-gradient(900px 520px at -10% 8%,rgba(25,184,154,.08),transparent 55%),var(--bg);
+color:var(--ink);font:16px/1.7 "Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif}
+a{color:var(--a);text-decoration:none}a:hover{text-decoration:underline}
+code{font-family:var(--mono);background:#161922;border:1px solid var(--line-soft);border-radius:5px;padding:1px 5px;font-size:13px}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:34px 22px 80px}
+.banner{width:100%;border-radius:16px;border:1px solid var(--line);display:block;margin:0 0 10px}
+.lede{font-size:19px;color:var(--ink-soft);margin:14px 2px 8px}
+.byline{color:var(--ink-faint);font-size:13.5px;margin:0 2px 26px}
+.byline a{color:var(--ink-soft)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+.card{display:block;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;
+box-shadow:0 10px 30px rgba(0,0,0,.28);transition:border-color .15s,transform .15s}
+.card:hover{border-color:var(--ctrl);text-decoration:none;transform:translateY(-2px)}
+.card .k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ctrl);font-weight:700}
+.card h2{font-size:20px;margin:6px 0 6px;color:var(--ink)}
+.card p{margin:0;color:var(--ink-soft);font-size:14.5px}
+.card .go{margin-top:12px;color:var(--ctrl);font-size:13px;font-weight:600}
+.chips{margin:26px 2px 6px;display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--panel);color:var(--ink-soft);border-radius:999px;padding:5px 12px;font-size:12.5px}
+.footer{color:var(--ink-faint);font-size:13px;border-top:1px solid var(--line);margin-top:34px;padding-top:18px}
+.footer a{color:var(--ink-soft)}
+h1{font-size:0;margin:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>cohermes documentation</h1>
+  <img class="banner" src="assets/banner.png" alt="cohermes — a team of AI coding agents that share one brain">
+  <p class="lede">A team of AI coding agents that share one brain — a Hermes extension whose per-user memory
+  becomes a shared, governed Context Graph.</p>
+  <p class="byline">Documentation index · <a href="https://github.com/dsivov/cohermes">github.com/dsivov/cohermes</a></p>
+
+  <div class="grid">
+    <a class="card" href="SETUP.html">
+      <div class="k">Start here</div><h2>Setup Guide</h2>
+      <p>Install, connect the shared brain, wire each developer, and run — with the <code>-p</code> vs tmux
+      decision and how context flows.</p>
+      <div class="go">Read the setup guide →</div>
+    </a>
+    <a class="card" href="CONTEXT_ARCHITECTURE.html">
+      <div class="k">Understand it</div><h2>How Context Works</h2>
+      <p>The four layers of context, who calls tools/subagents/MCP, how results reach the model, and why the
+      brain must stay curated. Illustrated.</p>
+      <div class="go">Read the explainer →</div>
+    </a>
+    <a class="card" href="TEAM_AGENT_FRAMEWORK.html">
+      <div class="k">The full story</div><h2>Design &amp; Decision Log</h2>
+      <p>The complete working log — vision, threat/goal model, every decision (A1–A3, D1–D13), the build, and
+      the diagrams — grounded in the code.</p>
+      <div class="go">Read the design log →</div>
+    </a>
+    <a class="card" href="LIVE_TEST.md">
+      <div class="k">Try it</div><h2>Live-Test Runbook</h2>
+      <p>The step-by-step to run the two-developer live test on real machines: CLI + UI, with success
+      criteria.</p>
+      <div class="go">Read the runbook →</div>
+    </a>
+  </div>
+
+  <div class="chips">
+    <span class="chip">subscription-native</span><span class="chip">read-from-brain</span>
+    <span class="chip">curated shared knowledge</span><span class="chip">Decision · Task · Commit · Review · Insight</span>
+    <span class="chip">an extension of Hermes</span>
+  </div>
+
+  <div class="footer">
+    cohermes — a fork of <a href="https://github.com/NousResearch/hermes-agent">hermes-agent</a> (MIT) ·
+    built on <a href="https://github.com/dsivov/Context_Graph">Context Graph</a>
+  </div>
+</div>
+</body>
+</html>
