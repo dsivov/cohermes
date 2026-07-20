@@ -57,6 +57,20 @@ ONTOLOGY = {
              {"name": "reviewer", "kind": "string"},
              {"name": "summary", "kind": "text"},
          ]},
+        {"name": "Insight",
+         "description": "A curated, durable learning about the project (D12) — "
+                        "agent- or human-recorded, with provenance (D13).",
+         "properties": [
+             {"name": "insight", "kind": "text", "required": True,
+              "description": "the distilled, confirmed learning"},
+             {"name": "developer", "kind": "string", "required": True,
+              "description": "who recorded it (D2 attribution)"},
+             {"name": "confidence", "kind": "float",
+              "description": "how confident, 0..1 (D13)"},
+             {"name": "status", "kind": "enum",
+              "enum_values": ["active", "superseded"]},
+             {"name": "recorded_at", "kind": "date"},
+         ]},
     ],
     "link_types": [
         {"name": "motivates", "source_types": ["Decision"], "target_types": ["Task"],
@@ -69,6 +83,10 @@ ONTOLOGY = {
          "cardinality": "N:M", "description": "a review enacts/produces decisions"},
         {"name": "depends_on", "source_types": ["Task"], "target_types": ["Task"],
          "cardinality": "N:M", "description": "task dependency"},
+        {"name": "informs", "source_types": ["Insight"], "target_types": [],
+         "cardinality": "N:M", "description": "a learning informs a topic/artifact"},
+        {"name": "supersedes", "source_types": ["Insight"], "target_types": ["Insight"],
+         "cardinality": "N:M", "description": "a learning supersedes an earlier one"},
     ],
 }
 

@@ -10,7 +10,7 @@ Run (usually launched by a project's .mcp.json):  python -m cg.mcp_server
 """
 from mcp.server.fastmcp import FastMCP
 
-from cg import artifacts, config, decisions, ingest
+from cg import artifacts, config, decisions, ingest, learnings
 
 mcp = FastMCP("cohermes")
 
@@ -73,6 +73,20 @@ def ingest_context(text: str, source: str = "cohermes-note") -> str:
     list its decisions. Extraction runs async; content becomes queryable shortly."""
     ingest.ingest_text(text, source=source)
     return f"ingested {len(text)} chars as '{source}' → chunks + extracted entities (async)"
+
+
+@mcp.tool()
+def record_learning(title: str, insight: str, developer: str, about: str = "",
+                    confidence: float = 0.8, supersedes: str = "") -> str:
+    """Promote a CURATED, confirmed learning about the project into the shared brain
+    (the drift-killer): a durable insight like "subsystem X works like…", "approach
+    Y failed", "always do Z". Stored as an attributed, confidence-scored Insight node
+    AND retrievable prose. Use `about` to link the topic it informs, `supersedes` to
+    retire a stale learning. Promote deliberately — do NOT dump raw session notes."""
+    out = learnings.record(title, insight, developer, about=about or None,
+                           confidence=confidence, supersedes=supersedes or None)
+    tail = (" · " + ", ".join(out["links"])) if out["links"] else ""
+    return f"recorded learning '{title}' (conf {confidence}, by {developer}){tail}"
 
 
 @mcp.tool()
