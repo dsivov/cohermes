@@ -10,6 +10,7 @@ Run:  python -m cg.preset /path/to/project [--role developer]
 import argparse
 import json
 import os
+import sys
 
 import requests
 
@@ -34,10 +35,15 @@ Follow this loop for every task:
    whether the team has already decided or done this. **Reuse the reasoning; do not
    re-derive it.** Cite what you find.
 3. **Work** — implement, staying inside the ontology and guardrails.
-4. **Record the why** — when you make a decision, call `record_decision` with a
-   clear `title`, `rationale`, `status`, and the **`developer`** (who you're acting
-   for). Advance task/commit/review state as you go. The next agent — or teammate —
-   will query this.
+4. **Record the why** — when you make a decision, call the **cohermes**
+   `record_decision` (a node + trace: cross-linkable *and* precedent-searchable) with
+   a clear `title`, `rationale`, `status`, `concerns`, and the **`developer`** you act
+   for. Build the chain with `record_task`/`record_commit`/`record_review` + `link`
+   (`motivates`/`implemented_by`/`reviewed_in`/`enacts`).
+5. **Add depth** — when you learn or write something about the project's
+   architecture, design, or status, call `ingest_context` so it becomes retrievable
+   prose in the shared brain — not just a one-line decision. Teammates' agents will
+   *explain* the system from it.
 
 Auth: cohermes runs Claude Code on your **Claude subscription**, never metered API
 billing. If a preflight ever reports API billing, stop and fix it (`unset
@@ -96,6 +102,16 @@ def install(target: str, role: str = "developer", developer: str | None = None) 
     """Write the loop preset into *target*. Returns the list of files written."""
     developer = developer or config.DEVELOPER or "this developer"
     boot = fetch_bootstrap(role)
+
+    # add the cohermes MCP server (node+trace record, chain links, ingest_context)
+    # alongside CG's own context-graph server, launched as a local stdio process.
+    cohermes_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    boot.setdefault("mcp_config", {}).setdefault("mcpServers", {})["cohermes"] = {
+        "command": sys.executable,
+        "args": ["-m", "cg.mcp_server"],
+        "env": {"PYTHONPATH": cohermes_root, "COHERMES_CG_URL": config.SERVER_URL,
+                "COHERMES_CG_WORKSPACE": config.WORKSPACE, "COHERMES_DEVELOPER": developer},
+    }
     written = []
 
     def _write(rel, content):
