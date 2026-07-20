@@ -309,6 +309,7 @@ hermes = "hermes_cli.main:main"
 hermes-agent = "run_agent:main"
 hermes-acp = "acp_adapter.entry:main"
 # cohermes — the Context Graph extension
+cohermes-agent = "cg.run:main"
 cohermes-mcp = "cg.mcp_server:main"
 cohermes-preset = "cg.preset:main"
 cohermes-backfill = "cg.backfill:main"
