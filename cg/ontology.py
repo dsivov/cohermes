@@ -57,6 +57,12 @@ ONTOLOGY = {
              {"name": "reviewer", "kind": "string"},
              {"name": "summary", "kind": "text"},
          ]},
+        {"name": "Module",
+         "description": "A first-party code module and what it's for (backfilled).",
+         "properties": [
+             {"name": "path", "kind": "string"},
+             {"name": "purpose", "kind": "text", "description": "what the module does"},
+         ]},
         {"name": "Insight",
          "description": "A curated, durable learning about the project (D12) — "
                         "agent- or human-recorded, with provenance (D13).",

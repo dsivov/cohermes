@@ -11,8 +11,18 @@ Run (usually launched by a project's .mcp.json):  python -m cg.mcp_server
 from mcp.server.fastmcp import FastMCP
 
 from cg import artifacts, config, decisions, ingest, learnings
+from cg import orient as _orient
 
 mcp = FastMCP("cohermes")
+
+
+@mcp.tool()
+def orient(topic: str) -> str:
+    """START HERE for any task. Returns a briefing from the team's shared brain on
+    `topic`: relevant prior decisions, active team learnings, and project/architecture
+    context — so you begin aligned with what the team already knows and decided,
+    instead of re-deriving it."""
+    return _orient.brief(topic)
 
 
 @mcp.tool()

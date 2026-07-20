@@ -53,12 +53,13 @@ ANTHROPIC_API_KEY`).
 COMMANDS = {
     "cg-orient.md": """\
 ---
-description: Orient in the shared Context Graph before starting work
+description: Orient from the shared brain before starting work ($ARGUMENTS)
+argument-hint: <task topic>
 ---
-Call the `get_manifest` MCP tool for this workspace and read `cg/PLAYBOOK.md`.
-Summarize, in a few lines: the object types available, the guardrails/rules in
-force, and any governed actions. This is the shared context the whole team works
-within — establish it before we build.
+Call the cohermes `orient` tool with the topic **$ARGUMENTS**. It briefs you from
+the team's shared brain: relevant prior decisions, active team learnings, and
+project/architecture context. Read it and start aligned — reuse what the team
+already decided and learned instead of re-deriving it.
 """,
     "cg-precedent.md": """\
 ---
