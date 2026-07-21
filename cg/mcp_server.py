@@ -101,6 +101,40 @@ def record_learning(title: str, insight: str, developer: str, about: str = "",
 
 
 @mcp.tool()
+def ask_claude(task: str, workdir: str = ".", max_turns: int = 20) -> str:
+    """Delegate a task to Claude Code (opus) — the FIRST-PARTY `claude` binary on the
+    Claude subscription. Runs the real Claude Code CLI and returns its output.
+
+    USE THIS FOR ALL SUBSTANTIVE WORK: work plans, architecture, design, decisions,
+    analysis, and any code. As the coordinator you must NOT produce these yourself —
+    pass the user's request here verbatim (plus any context) and relay the result.
+    `workdir` is the project directory Claude runs in (it auto-reads CLAUDE.md + the
+    repo, so you rarely need to paste files). This tool constructs the invocation
+    safely, so you never hand-build shell strings."""
+    import os
+    import subprocess
+
+    wd = os.path.abspath(os.path.expanduser(workdir or "."))
+    # A2: run Claude Code first-party — scrub anything that would meter it.
+    env = {k: v for k, v in os.environ.items() if k not in (
+        "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN",
+        "CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX", "CLAUDE_CODE_USE_FOUNDRY")}
+    try:
+        proc = subprocess.run(
+            ["claude", "-p", task, "--max-turns", str(max_turns)],
+            cwd=wd, env=env, capture_output=True, text=True, timeout=900)
+    except FileNotFoundError:
+        return "ERROR: the `claude` CLI is not installed or not on PATH."
+    except subprocess.TimeoutExpired:
+        return "ERROR: Claude Code timed out (900s)."
+    out = (proc.stdout or "").strip()
+    err = (proc.stderr or "").strip()
+    if proc.returncode != 0 and not out:
+        return f"ERROR (claude exit {proc.returncode}): {err[:500]}"
+    return out or err or "(no output)"
+
+
+@mcp.tool()
 def whoami() -> str:
     """Report the workspace and developer this agent acts for."""
     return f"workspace={config.WORKSPACE}, developer={config.DEVELOPER or 'unset'}"

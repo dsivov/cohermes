@@ -4180,7 +4180,16 @@ def _make_tool_handler(server_name: str, tool_name: str, tool_timeout: float):
                 # it and detect the gateway platform / session for routing.
                 server._pending_call_context = contextvars.copy_context()
                 try:
-                    result = await server.session.call_tool(tool_name, arguments=args)
+                    # cohermes: long-running delegation tools (e.g. ask_claude,
+                    # which runs a full `claude -p` session) exceed the MCP SDK's
+                    # 300s default read-timeout. Raise it (env-configurable) so the
+                    # coordinator can wait for opus to finish real work.
+                    import os as _os
+                    from datetime import timedelta as _timedelta
+                    _call_to = float(_os.getenv("HERMES_MCP_CALL_TIMEOUT", "1800"))
+                    result = await server.session.call_tool(
+                        tool_name, arguments=args,
+                        read_timeout_seconds=_timedelta(seconds=_call_to))
                 finally:
                     server._pending_call_context = None
             # MCP CallToolResult has .content (list of content blocks) and .isError
