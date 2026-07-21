@@ -295,15 +295,36 @@ developer: dima</code></pre>
   keeping the worker on the actual binary.</div>
   <p>The design splits the roles accordingly:</p>
   <ul>
-    <li><b>Worker = the real <code>claude</code> binary</b> — all actual coding/reasoning. First-party, plan limits.</li>
-    <li><b>Coordinator = a developer-local model</b> — Hermes's own orchestration turns run on a local model
-      (llama.cpp / Ollama), so they never meter. This is a <b>per-developer</b> setting (each dev runs their own
-      hardware), kept in a <em>gitignored</em> override — <b>not</b> the committed <code>.cohermes.yaml</code> — and
-      easy to change: <code>cohermes coordinator set --base-url … --model …</code>. Onboarding auto-detects a local
-      endpoint. (Note: the coordinator model needs a ≥64K served context window — Hermes's floor.)</li>
+    <li><b>Worker = opus, the real <code>claude</code> binary</b> — all actual coding/reasoning. First-party, plan
+      limits. The coordinator reaches it through exactly one tool, <code>ask_claude(task, workdir=".", max_turns=20)</code>
+      (in cohermes's MCP server): it runs <code>claude -p</code> as a subprocess with <b>list-args</b> (no
+      shell-quoting bugs), A2-scrubs the env, and returns opus's output. The MCP call timeout is raised
+      (<code>HERMES_MCP_CALL_TIMEOUT</code>, default <b>1800s</b>) so a long delegation completes instead of hitting
+      the SDK's 300s default. Delegation is enforced <b>in code, not by prompt</b> — the coordinator's
+      file/terminal/code tools are stripped, so it <em>cannot</em> do the substantive work itself.</li>
+    <li><b>Coordinator = a developer-local model</b> — Hermes's own orchestration turns (routing + Context Graph
+      interaction) run on a cheap model, so they never touch plan limits. This is a <b>per-developer</b> setting kept
+      in the <em>gitignored</em> <code>.hermes/config.yaml</code> — <b>not</b> the committed <code>.cohermes.yaml</code>
+      — and easy to change: <code>cohermes coordinator set --base-url … --model …</code>.
+      <b>Recommended: Bedrock Gemma 4 31B</b> (<code>google.gemma-4-31b</code>) over the <code>bedrock-mantle</code>
+      OpenAI-compatible endpoint, authed with a <b>Bedrock API key as a bearer token</b> (a box's ambient IAM creds
+      may lack Bedrock perms; the account-scoped bearer token is the reliable path), with
+      <code>extra_body: {parallel_tool_calls: false}</code> <b>required</b> — Bedrock Gemma 4 has no parallel tool
+      calls, and omitting it hangs the turn.
+      <b>Alternative:</b> a <b>local model</b> (llama.cpp / Ollama) serving a <b>≥64K</b> context window — Hermes's
+      floor (e.g. <code>llama-server --ctx-size 65536</code>) — viable but slower/weaker than Bedrock Gemma 4 31B.
+      Onboarding auto-detects a local endpoint.</li>
     <li>launchers scrub <code>ANTHROPIC_API_KEY</code> + cloud vars; onboarding <b>refuses to write</b> a metered key,
       and <code>cohermes doctor</code> fails loudly on one.</li>
   </ul>
+  <pre><code><span class="cm"># .hermes/config.yaml — the per-developer, gitignored coordinator (NOT .cohermes.yaml)</span>
+model:
+  provider: custom
+  default:  google.gemma-4-31b
+  base_url: https://bedrock-mantle.us-east-1.api.aws/openai/v1
+  api_key:  &lt;Bedrock API key / bearer token&gt;
+  context_length: 262144                        <span class="cm"># 256K</span>
+  extra_body: { parallel_tool_calls: false }    <span class="cm"># REQUIRED — omit and it hangs</span></code></pre>
 </section>
 
 <section id="ui">

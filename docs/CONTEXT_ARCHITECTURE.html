@@ -69,6 +69,7 @@ figcaption{font-size:13.5px;color:var(--ink-faint);margin-top:10px}
   <li><a href="#layers">Four layers of context</a></li>
   <li><a href="#enough">Is CG enough?</a></li>
   <li><a href="#who">Who calls the tools</a></li>
+  <li><a href="#coord">Coordinator &amp; worker</a></li>
   <li><a href="#flow">How results reach the model</a></li>
   <li><a href="#window">The finite window → curation</a></li>
   <li><a href="#pp">"-p" and the layers</a></li>
@@ -204,6 +205,45 @@ figcaption{font-size:13.5px;color:var(--ink-faint);margin-top:10px}
   </div><figcaption>Three nested responsibilities: <b>Hermes</b> orchestrates (when/how to launch),
   <b>Claude Code</b> is the harness, <b>the model</b> decides tool calls. In the simplest cohermes flow
   (<code>cohermes-agent</code>, no Hermes) it's just Claude Code + the brain.</figcaption></figure>
+</section>
+
+<section id="coord">
+  <div class="kick">who reasons</div>
+  <h2>The coordinator/worker split — where the thinking actually happens</h2>
+  <p class="lead-p">In the Hermes-runtime flavor there are <b>two</b> models, and they are deliberately unequal.
+  A cheap <b>coordinator</b> runs the outer loop; the real reasoning is delegated to <b>opus</b>. The reason is
+  not elegance — it's a 2026-07 billing correction that forced the split.</p>
+
+  <div class="callout warn"><div class="cl">The 2026-07 metering correction</div>
+    Anthropic now routes <b>third-party apps</b> that authenticate with your subscription OAuth token through
+    <b>"extra usage"</b> (a paid per-token overage), <b>not</b> your plan limits. Hermes's own agent loop calls the
+    Messages API with a <code>claude-code (external, cli)</code> user-agent + your token — a third-party call — so
+    <b>Hermes-as-a-model is metered</b>. <b>Only the real first-party <code>claude</code> binary draws from plan
+    limits.</b> So all substantive reasoning must run through the actual <code>claude</code> CLI, never through
+    Hermes-as-a-model.</div>
+
+  <p>That correction is what defines the roles. The coordinator handles only the cheap, high-frequency work; the
+  worker does everything that counts:</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th></th><th>Coordinator</th><th>Worker</th></tr></thead>
+    <tbody>
+      <tr><td>Model</td><td>a cheap model (e.g. Bedrock Gemma 4 31B, or a local llama.cpp/Ollama)</td><td><b>opus — the real <code>claude</code> binary</b></td></tr>
+      <tr><td>Does</td><td>routing · deciding what to delegate · <b>Context Graph interaction</b> (orient / precedent / record via the <code>context-graph</code> MCP tools)</td><td><b>all substantive reasoning</b> — plans, architecture, design, decisions, code</td></tr>
+      <tr><td>Billing</td><td>the one accepted metered piece (cheap model, light role)</td><td><b>first-party · plan limits</b> — never metered</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>The coordinator never produces the substantive answer itself; it delegates through <b>one</b> tool,
+  <code>ask_claude</code> (in cohermes's MCP server), which runs <code>claude -p</code> as a subprocess with
+  list-args (no shell-quoting bugs) and returns opus's output. Delegation is enforced <b>in code, not by prompt</b>
+  — the coordinator's file/terminal/code tools are stripped, so a weak model <em>cannot</em> quietly do the work
+  (and meter it) instead of handing it to the binary.</p>
+
+  <div class="callout key"><div class="cl">How this maps onto the four layers</div>
+    The coordinator is the one <b>reading and writing layer A</b> (Context Graph) — orienting, querying precedent,
+    recording decisions — and routing. But the reasoning that consumes A + B + C in a finite window is opus's,
+    inside its own first-party <code>claude</code> loop. The split is a billing boundary drawn <i>through</i> the
+    architecture: cheap coordination on the metered side, all real thinking on the plan-limits side.</div>
 </section>
 
 <section id="flow">

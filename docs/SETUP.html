@@ -71,6 +71,7 @@ border-radius:999px;font-size:12px;font-weight:700;padding:1px 10px;margin-right
   <li><a href="#hook">The Hermes hook</a></li>
   <li><a href="#two">Two-developer walkthrough</a></li>
   <li><a href="#ui">The UI</a></li>
+  <li><a href="#coordinator">The coordinator + worker model</a></li>
   <li><a href="#trouble">Troubleshooting</a></li>
 </ol></nav>
 
@@ -234,6 +235,78 @@ hermes                    <span class="cm"># run Hermes; the hook fires on each 
   you orchestrate through Hermes, its TUI / web dashboard is the agent UI.</p>
 </section>
 
+<section id="coordinator">
+  <div class="kick">the metered-loop fix</div>
+  <h2>The coordinator + worker model</h2>
+  <p>The Hermes-orchestrated flavor above runs Hermes's own agent loop as <i>the model</i>. As of the
+  <b>2026-07 Anthropic policy change</b> that no longer stays on plan limits — so cohermes splits the work
+  into a cheap <b>coordinator</b> and a first-party <b>worker</b>.</p>
+
+  <div class="callout warn"><div class="cl">The A2 truth · 2026-07 correction</div>
+    <b>Only the first-party <code>claude</code> binary draws from your plan limits.</b> Third-party apps that
+    authenticate with your subscription OAuth token now bill <b>"extra usage"</b> (paid per-token overage), not
+    your plan. Hermes calls the Messages API with a <code>claude-code (external, cli)</code> user-agent + your
+    OAuth token — a third-party call — so <b>Hermes's own runtime loop is now metered</b> (HTTP 400 when the
+    extra-usage balance is 0). Real reasoning must therefore run through the <b>actual <code>claude</code>
+    CLI</b>, never through Hermes-as-a-model.</div>
+
+  <h3>The split</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th></th><th>Coordinator</th><th>Worker</th></tr></thead>
+    <tbody>
+      <tr><td>Model</td><td>a cheap model (per-developer)</td><td><b>opus — the real <code>claude</code> binary</b></td></tr>
+      <tr><td>Billing</td><td>metered (small, the one accepted cost)</td><td>first-party, plan limits</td></tr>
+      <tr><td>Does</td><td>routing · deciding what to delegate · Context Graph interaction (orient / precedent / record)</td><td><b>all</b> substantive work: plans, architecture, design, decisions, code</td></tr>
+      <tr><td>Produces the answer?</td><td>never — it relays the worker's output</td><td>yes</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small">Delegation is enforced <b>in code, not by prompt</b> — a weak coordinator won't reliably
+  choose to delegate, and fumbles hand-built <code>claude -p '...'</code> shell strings (quoting bugs).</p>
+
+  <h3>Configure the coordinator (per-developer, gitignored)</h3>
+  <p>The coordinator is each developer's own choice of hardware/keys, so it lives in the project-local,
+  <b>gitignored</b> <code>&lt;project&gt;/.hermes/config.yaml</code> — <b>not</b> the committed config.</p>
+  <p><b>Recommended — Bedrock Gemma 4 31B</b> (hosted, ~6–10s/turn, capable; the local 12B was too weak+slow).
+  An OpenAI-compatible endpoint:</p>
+  <pre><code><span class="kw">model</span>:
+  <span class="kw">provider</span>: custom
+  <span class="kw">default</span>: google.gemma-4-31b
+  <span class="kw">base_url</span>: https://bedrock-mantle.us-east-1.api.aws/openai/v1   <span class="cm"># regions: us-east-1/2, us-west-2, eu-central-1</span>
+  <span class="kw">api_key</span>: &lt;Bedrock API key / bearer token&gt;
+  <span class="kw">context_length</span>: 262144            <span class="cm"># 256K</span>
+  <span class="kw">extra_body</span>: { parallel_tool_calls: false }   <span class="cm"># REQUIRED — Bedrock Gemma 4 has no parallel tool calls; omit and it hangs</span></code></pre>
+  <div class="callout key"><div class="cl">Required · <code>extra_body</code></div>
+    <b><code>extra_body: { parallel_tool_calls: false }</code> is not optional.</b> Bedrock Gemma 4 has no
+    parallel tool calls; omit it and the coordinator hangs with no reply. Auth is a <b>Bedrock API key</b>
+    (bearer token) used as the OpenAI <code>api_key</code> — a box's ambient IAM creds may lack Bedrock perms,
+    so use the account-scoped bearer token.</div>
+  <p><b>Alternative — a local model</b> (llama.cpp / Ollama). It must serve a <b>≥64K</b> context window
+  (Hermes's floor; e.g. <code>llama-server --ctx-size 65536</code>) and you point <code>base_url</code> at it.
+  Viable, but slower/weaker than Bedrock Gemma 4 31B.</p>
+
+  <h3>The work channel: <code>ask_claude</code> + forced delegation</h3>
+  <p>The coordinator's only path to real work is the <code>ask_claude(task, workdir=".", max_turns=20)</code>
+  tool in <code>cg/mcp_server.py</code>. It runs the real <code>claude -p</code> via subprocess with
+  <b>list-args</b> (no shell quoting), A2-scrubs the env, and returns opus's output. Delegation is forced by
+  stripping the coordinator's "work" tools and giving it a role policy:</p>
+  <pre><code><span class="cm"># strip work tools; keep delegation/clarify/memory + the context-graph &amp; cohermes MCP tools</span>
+hermes tools disable file code_execution web browser terminal vision image_gen ...</code></pre>
+  <p>Plus a <code>SOUL.md</code> (loaded from <code>HERMES_HOME</code>): <i>"You are a coordinator; use
+  <code>ask_claude</code> for all real work; you have no file/terminal/code tools."</i> The MCP tool-call
+  read-timeout is raised via <code>HERMES_MCP_CALL_TIMEOUT</code> (default <b>1800s</b>) so a long opus
+  delegation completes instead of hitting the SDK's 300s default.</p>
+
+  <h3>Run it</h3>
+  <pre><code>HERMES_HOME=&lt;project&gt;/.hermes /storage/Work/cohermes/.venv/bin/hermes chat</code></pre>
+  <p class="small">Durable venv; per-dev <code>.hermes/</code> home; the CG MCP is pinned to the project's
+  workspace.</p>
+
+  <div class="callout ok"><div class="cl">Verified</div>
+    Request → Bedrock gemma coordinator → <code>ask_claude</code> → <b>opus in 58s</b> (a 5,797-char expert,
+    repo-aware plan: it found PDF ingestion already existed at <code>research/source_ingest.py:72</code> and
+    named the real gaps with file:line) → coordinator relayed it. Total <b>1m37s</b>, worker <b>unmetered</b>.</div>
+</section>
+
 <section id="trouble">
   <div class="kick">if something's off</div>
   <h2>Troubleshooting</h2>
@@ -244,6 +317,7 @@ hermes                    <span class="cm"># run Hermes; the hook fires on each 
       <tr><td>MCP server "pending approval"</td><td>the preset writes <code>.claude/settings.local.json</code> with <code>enableAllProjectMcpServers</code>; run <code>claude</code> once to approve if needed.</td></tr>
       <tr><td><code>cg</code> import error / MCP won't start</td><td>ensure you <code>pip install -e .</code> (not just a checkout) — that removes the PYTHONPATH requirement.</td></tr>
       <tr><td>Agent says "no cohermes tools are exposed" / falls back to context-graph's <code>record_decision</code> (trace, no node)</td><td>the cohermes stdio MCP server failed to start — almost always a missing <code>mcp</code> package. Confirm with <code>claude mcp list</code> (both <code>context-graph</code> and <code>cohermes</code> must appear) and <code>python -m cg.mcp_server</code>. Do a full <code>pip install -e .</code> (<strong>not</strong> <code>--no-deps</code>) so <code>mcp</code> + <code>requests</code> are installed.</td></tr>
+      <tr><td>Coordinator hangs / no reply on Bedrock Gemma</td><td>set <code>extra_body: { parallel_tool_calls: false }</code> in the coordinator's <code>.hermes/config.yaml</code> — Bedrock Gemma 4 has no parallel tool calls.</td></tr>
       <tr><td>Empty <code>orient</code> brief</td><td>seed the brain first — <code>cohermes-ontology</code> + <code>cohermes-backfill</code>, and record a decision or two.</td></tr>
     </tbody>
   </table></div>

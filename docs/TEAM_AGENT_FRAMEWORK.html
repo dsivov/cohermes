@@ -1099,6 +1099,54 @@ claude auth status <span class="cm"># must report subscription, NOT "API key: Co
     depend on); tmux optional for live multi-turn sessions. Full <b>setup guide</b> with the mode comparison
     + context-flow diagram: <code>cohermes/docs/SETUP.html</code>.
   </div>
+
+  <h3>2026-07-21 · The metering correction → coordinator + worker <span class="pill win">✓</span></h3>
+  <p>A2 was refined, not overturned, by a hard-won discovery. Anthropic's <b>2026-07 policy change</b>: a
+  <b>third-party</b> app that authenticates with your subscription OAuth token now draws from <b>"extra usage"</b>
+  (a paid per-token overage), <b>not</b> your plan limits. Hermes's own agent loop calls the Messages API with a
+  <code>claude-code (external, cli)</code> user-agent + your token — a third-party call — so <b>Hermes-as-a-model
+  is metered</b> (HTTP 400 when the extra-usage balance is 0). <b>Only the real first-party <code>claude</code>
+  binary draws from plan limits.</b> A2's spirit ("agents run on the subscription") therefore now requires that
+  <i>all real reasoning</i> run through the actual <code>claude</code> CLI — never through Hermes calling Claude
+  as a model.</p>
+  <p>The resolution is a <b>coordinator + worker</b> split, enforced <b>in code, not by prompt</b> (a weak
+  coordinator won't reliably choose to delegate, and fumbles hand-built <code>claude -p '…'</code> shell strings):</p>
+  <div class="grid g2">
+    <div class="card"><b>Coordinator</b> — a cheap model<br><span class="small">does <i>only</i> routing, deciding
+      what to delegate, and <b>Context Graph interaction</b> (orient / precedent / record via the
+      <code>context-graph</code> MCP tools). Never produces the substantive answer. The one accepted metered piece.</span></div>
+    <div class="card"><b>Worker</b> — <b>opus, the real <code>claude</code> binary</b><br><span class="small">does
+      <i>all</i> substantive work — plans, architecture, design, decisions, code. First-party, plan limits, unmetered.</span></div>
+  </div>
+  <div class="callout ok">
+    <div class="clabel">The mechanism — committed to the fork (<code>b773fff5f</code>)</div>
+    <b><code>ask_claude(task, workdir=".", max_turns=20)</code></b> — a tool in <code>cg/mcp_server.py</code> that
+    runs the real <code>claude -p</code> via subprocess with <b>list-args</b> (no shell quoting), A2-scrubs the env,
+    and returns opus's output. It is the coordinator's <b>only</b> work channel. Paired patch:
+    <code>tools/mcp_tool.py</code> now reads the MCP tool-call timeout from <code>HERMES_MCP_CALL_TIMEOUT</code>
+    (default <b>1800s</b>), so a long opus delegation completes instead of hitting the MCP SDK's 300s default.
+    Force-delegation is completed by stripping the coordinator's work tools (<code>file · code_execution · web ·
+    browser · terminal · vision · image_gen</code>) and a <code>SOUL.md</code> role policy — keeping only
+    delegation / clarify / memory + the <code>context-graph</code> and <code>cohermes</code> MCP tools.
+  </div>
+  <div class="callout key">
+    <div class="clabel">The coordinator model — Bedrock Gemma 4 31B (per-developer, gitignored)</div>
+    The coordinator is each developer's own choice, living in the project-local, <b>gitignored</b>
+    <code>.hermes/config.yaml</code> (not the committed config). <b>Recommended: Bedrock Gemma 4 31B</b>
+    (<code>google.gemma-4-31b</code>, fast ~6–10s/turn; the local 12B was too weak+slow) over the
+    <code>bedrock-mantle</code> OpenAI-compatible endpoint, authed with a <b>Bedrock API key as a bearer token</b>
+    (a box's ambient IAM creds may lack Bedrock perms; the account-scoped bearer token is reliable) — with
+    <code>extra_body: {parallel_tool_calls: false}</code> <b>required</b>, because Bedrock Gemma 4 has no parallel
+    tool calls and omitting it hangs the turn. <b>Alternative:</b> a local model (llama.cpp / Ollama) serving a
+    <b>≥64K</b> context window (Hermes's floor) — viable but slower/weaker.
+  </div>
+  <div class="callout ok">
+    <div class="clabel">Verified end-to-end</div>
+    Request → Bedrock Gemma coordinator → <code>ask_claude</code> → <b>opus in 58s</b> (a 5,797-char, repo-aware
+    expert plan: it found PDF ingestion already existed at <code>research/source_ingest.py:72</code> and named the
+    real gaps by <code>file:line</code>) → coordinator relayed it. <b>Total 1m37s, worker unmetered</b> — the
+    split works, and the plan-limits reasoning is genuinely first-party.
+  </div>
 </section>
 
 <!-- log -->
@@ -1128,6 +1176,7 @@ claude auth status <span class="cm"># must report subscription, NOT "API key: Co
       <tr><td>D12</td><td>2026-07-20</td><td>Agent memory</td><td><b>Curated promotion, not raw sync.</b> Agents promote <i>confirmed, distilled</i> learnings via a <code>record_learning</code> tool (attributed + confidence-scored) — the antidote to semantic drift. Raw private memory stays scratch; auto-syncing whole memories is rejected (pollutes retrieval). Read-from-brain (hermes memory-swap) deferred.</td><td><span class="pill win">decided</span></td></tr>
       <tr><td>D13</td><td>2026-07-20</td><td>Provenance</td><td><b>Agent-generated content carries author + confidence + a validity status</b> (active/superseded), so a teammate's agent knows "an agent asserted this" vs "a human decided this," and the brain can model <i>was true</i> vs <i>is true</i> (supersession). Converges with the RAG-security provenance/trust theme.</td><td><span class="pill win">decided</span></td></tr>
       <tr><td>D9</td><td>2026-07-18</td><td>Acceptance (Q9)</td><td><b>Traceable-chain demo + one lightweight reuse measurement.</b> Same task in a fresh vs populated workspace → turns/tokens to answer + did it cite the recorded decision. Makes "reused not re-derived" objective (the RAG project's measure-it habit) and catches false-looking reuse.</td><td><span class="pill win">decided</span></td></tr>
+      <tr><td>A4</td><td>2026-07-21</td><td>Constraint · <b>A2 refinement</b></td><td><b>Coordinator + worker, because only the first-party <code>claude</code> binary is plan-limits.</b> Anthropic's 2026-07 change meters third-party OAuth usage as "extra usage", so Hermes-as-a-model is metered and A2 now requires all real reasoning to run through the actual <code>claude</code> CLI. A cheap <b>coordinator</b> (routing + Context Graph interaction) delegates all substantive work to an <b>opus worker</b> via the <code>ask_claude</code> tool (deterministic <code>claude -p</code>, list-args, MCP timeout raised to 1800s) — enforced in code by stripping the coordinator's work tools. Coordinator = <b>Bedrock Gemma 4 31B</b> (<code>parallel_tool_calls: false</code> required), per-developer + gitignored; local ≥64K model is the alternative. Committed <code>b773fff5f</code>; verified end-to-end (1m37s, opus 58s, worker unmetered).</td><td><span class="pill win">decided</span></td></tr>
     </tbody>
   </table></div>
 </section>

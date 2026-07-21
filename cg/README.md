@@ -17,6 +17,40 @@ CG installed locally).
   `Decision –motivates→ Task –implemented_by→ Commit –reviewed_in→ Review –enacts→ Decision`.
   The graph enforces link direction, so the chain can't be wired backwards.
 
+## Coordinator + worker
+
+**A2 correction (2026-07).** A2 means agents run on the Claude **subscription**, not metered
+API billing — but only the real **first-party `claude` binary draws from plan limits**.
+Anthropic's 2026-07 policy change routes third-party OAuth calls (Hermes's own agent loop
+included) through paid **extra-usage**, so Hermes-as-a-model is metered *now*. Consequently all
+real reasoning must run through the actual `claude` CLI.
+
+So cohermes splits the roles:
+
+- **Coordinator** — a cheap model. Routes work and does **Context Graph interaction** (orient /
+  query precedent / record decisions). It never produces the substantive answer itself, and is
+  stripped of file/terminal/code tools so it can't try.
+- **Worker** — **opus, the first-party `claude` binary** (plan limits). Does all substantive
+  work: plans, architecture, design, decisions, code.
+
+Delegation is enforced in code, not by prompt: the **`ask_claude`** tool (`cg/mcp_server.py`)
+runs the real `claude -p` via subprocess with list-args (no shell-quoting bugs), A2-scrubs the
+env, and returns opus's output — the coordinator's only work channel. See
+[`COORDINATOR.md`](COORDINATOR.md) for the coordinator role guide (drop it at a project's
+`.hermes/SOUL.md`).
+
+**Coordinator model** (a per-developer, gitignored choice in `<project>/.hermes/config.yaml`):
+
+- **Recommended: Bedrock Gemma 4 31B** — hosted, fast (~6–10s/turn), capable. OpenAI-compatible
+  endpoint; **must set `extra_body: { parallel_tool_calls: false }`** (Bedrock Gemma 4 has no
+  parallel tool calls and hangs without it). Auth with a Bedrock API key / bearer token.
+- **Alternative: a local model** (llama.cpp / Ollama) serving a **≥64K** context window (Hermes's
+  floor) — viable but slower/weaker than Bedrock Gemma 4 31B.
+
+The two flavors are both first-party for the actual reasoning: the **Claude Code flavor**
+(`cohermes agent`) where opus *is* the agent, and the **Hermes-coordinator flavor** above (cheap
+coordinator + Hermes orchestration around opus workers) for automation / multi-agent.
+
 ## Setup
 
 ```bash

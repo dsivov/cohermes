@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cohermes — User Manual</title>
+<style>
+:root{--bg:#0f1117;--panel:#1b1f2a;--panel2:#222736;--ink:#e7ebf3;--ink-soft:#aab3c5;--ink-faint:#7b8499;
+--line:#2c3346;--line-soft:#232a3a;--a:#5b8def;--b:#19b89a;--c:#f0a73c;--ctrl:#22c3d6;--ok:#3ecf8e;--danger:#ef5b6e;
+--mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;--maxw:1080px;--radius:14px;
+--shadow:0 10px 30px rgba(0,0,0,.35);}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(1100px 600px at 82% -10%,rgba(34,195,214,.10),transparent 60%),
+radial-gradient(900px 520px at -10% 8%,rgba(25,184,154,.08),transparent 55%),var(--bg);
+color:var(--ink);font:16px/1.7 "Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif}
+a{color:var(--a);text-decoration:none}a:hover{text-decoration:underline}
+code,pre,.mono{font-family:var(--mono)}svg{max-width:100%;height:auto}
+.hero{padding:64px 22px 30px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(34,195,214,.07),transparent)}
+.hero-inner{max-width:880px;margin:0 auto}
+.eyebrow{letter-spacing:.22em;text-transform:uppercase;font-size:12px;color:var(--ink-faint);font-weight:700}
+.hero h1{font-size:clamp(30px,5vw,48px);margin:.3em 0 .2em;background:linear-gradient(92deg,#bdf0ea,#8fb4d9 55%,#a7ecf5);
+-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{font-size:clamp(16px,2vw,20px);color:var(--ink-soft)}
+.layout{max-width:var(--maxw);margin:0 auto;display:grid;grid-template-columns:220px 1fr;gap:38px;padding:28px 22px 90px}
+nav.toc{position:sticky;top:16px;align-self:start;max-height:calc(100vh - 32px);overflow:auto;border:1px solid var(--line);
+border-radius:var(--radius);background:var(--panel);padding:12px}
+nav.toc .tl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin:4px 6px 8px}
+nav.toc ol{list-style:none;margin:0;padding:0;counter-reset:t}nav.toc li{counter-increment:t}
+nav.toc a{display:flex;gap:8px;padding:5px 8px;border-radius:8px;color:var(--ink-soft);font-size:13px}
+nav.toc a::before{content:counter(t,decimal-leading-zero);color:var(--ink-faint);font-family:var(--mono);font-size:11px}
+nav.toc a:hover{background:var(--panel2);color:var(--ink);text-decoration:none}
+main{min-width:0;max-width:760px}section{margin:0 0 46px;scroll-margin-top:18px}
+h2{font-size:clamp(21px,3vw,28px);margin:0 0 6px}h3{font-size:18px;margin:24px 0 6px}
+.kick{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ctrl);font-weight:700;margin-bottom:6px}
+p{margin:.6em 0}.small{font-size:13.5px;color:var(--ink-faint)}
+pre{background:#0c0e14;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow:auto;font-size:13px;line-height:1.55}
+pre code{color:#d6deec}.cm{color:#5c6685}.kw{color:#7aa2f7}.str{color:#9ece6a}
+code:not(pre code){background:#161922;border:1px solid var(--line-soft);border-radius:5px;padding:1px 5px;font-size:13px}
+.callout{border-radius:12px;padding:13px 15px;border:1px solid var(--line);background:var(--panel2);margin:16px 0}
+.callout .cl{font-weight:700;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+.callout.key{border-color:rgba(34,195,214,.55);background:rgba(34,195,214,.10)}.callout.key .cl{color:#8fe6f2}
+.callout.ok{border-color:rgba(62,207,142,.5);background:rgba(62,207,142,.08)}.callout.ok .cl{color:#7ee3b4}
+.callout.warn{border-color:rgba(240,167,60,.5);background:rgba(240,167,60,.08)}.callout.warn .cl{color:#ffce86}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px;margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th{background:var(--panel2);text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--ink-soft)}
+td{padding:9px 11px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+.fig{background:#12151d;border:1px solid var(--line-soft);border-radius:12px;padding:15px;margin:16px 0}
+.step{display:inline-block;background:rgba(34,195,214,.16);color:#8fe6f2;border:1px solid rgba(34,195,214,.4);
+border-radius:999px;font-size:12px;font-weight:700;padding:1px 10px;margin-right:8px}
+.footer{max-width:var(--maxw);margin:0 auto;padding:26px 22px 60px;color:var(--ink-faint);font-size:13px;border-top:1px solid var(--line)}
+@media(max-width:900px){.layout{grid-template-columns:1fr}nav.toc{display:none}main{max-width:none}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="hero-inner">
+  <div class="eyebrow">cohermes · user manual</div>
+  <h1>Using cohermes day to day</h1>
+  <p class="lede">Claude Code plus a shared Context Graph, with an optional cheap Hermes coordinator in front of
+  first-party opus workers. This is the human's guide: which flavor to run, the orient → work → record loop, how
+  to configure your coordinator, and what to do when something jams.</p>
+</div></header>
+
+<div class="layout">
+<nav class="toc"><div class="tl">Contents</div><ol>
+  <li><a href="#what">What cohermes is now</a></li>
+  <li><a href="#flavors">Two ways to run</a></li>
+  <li><a href="#loop">The loop</a></li>
+  <li><a href="#coord">Configure your coordinator</a></li>
+  <li><a href="#run">Running it</a></li>
+  <li><a href="#pays">What runs where / who pays</a></li>
+  <li><a href="#trouble">Troubleshooting</a></li>
+</ol></nav>
+
+<main>
+
+<section id="what">
+  <div class="kick">Start here</div>
+  <h2>What cohermes is now</h2>
+  <p>cohermes is <b>Claude Code + a shared Context Graph</b>, with an <b>optional Hermes coordinator</b> in
+  front. Whatever flavor you run, the same rule holds: <b>first-party opus does all the real work</b> — plans,
+  architecture, design, decisions, and code. The Context Graph is the team brain: durable, cross-session context
+  that every agent reads from and records back to.</p>
+  <p>The Hermes coordinator, when you use it, is deliberately small. It routes, decides what to delegate, and
+  talks to the Context Graph — it never writes the substantive answer itself. It hands the actual reasoning to
+  the real <code>claude</code> binary running opus.</p>
+  <div class="callout key"><div class="cl">The one rule</div>
+    All real reasoning runs through the actual first-party <code>claude</code> CLI (opus), never through Hermes
+    acting as a model. Only the genuine <code>claude</code> binary draws from your plan limits — everything else
+    is either a cheap coordinator or an overage bill.</div>
+</section>
+
+<section id="flavors">
+  <div class="kick"><span class="step">1</span>pick a flavor</div>
+  <h2>The two ways to run</h2>
+  <p>Both flavors do the actual reasoning first-party on opus. They differ in <i>what sits in front</i> of opus.</p>
+
+  <h3>(a) Claude Code flavor — opus <i>is</i> the agent</h3>
+  <p>You run the real <code>claude</code> (via <code>cohermes agent</code> / <code>cohermes-agent</code>) and
+  opus is the agent directly. There is no coordinator layer. This is the best flavor for interactive
+  design and planning — sitting with the agent, thinking about your project turn by turn. First-party, plan
+  limits.</p>
+
+  <h3>(b) Hermes-coordinator flavor — cheap coordinator + opus workers</h3>
+  <p>A cheap coordinator model fronts Hermes's orchestration (tools, memory, gateway, scheduling) and delegates
+  every substantive task to an opus worker through <code>ask_claude</code>. Best for automation and
+  multi-agent orchestration where you want something cheap deciding <i>what</i> to run and opus doing the work.</p>
+
+  <div class="tablewrap"><table>
+    <thead><tr><th></th><th>(a) Claude Code flavor</th><th>(b) Hermes-coordinator flavor</th></tr></thead>
+    <tbody>
+      <tr><td>Who is the agent</td><td>opus, directly</td><td>cheap coordinator routes; opus worker does the work</td></tr>
+      <tr><td>Coordinator layer</td><td>none</td><td>a small metered model (e.g. Bedrock Gemma 4 31B)</td></tr>
+      <tr><td>Best for</td><td>interactive design / planning; "think about my project"</td><td>automation, orchestration, multi-agent runs</td></tr>
+      <tr><td>Real reasoning</td><td>first-party opus (plan limits)</td><td>first-party opus worker (plan limits)</td></tr>
+      <tr><td>Orchestration extras</td><td>Claude Code's own</td><td>Hermes tools / memory / gateway / scheduling</td></tr>
+      <tr><td>Cost shape</td><td>plan limits only</td><td>plan limits (worker) + small metered coordinator</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout ok"><div class="cl">Rule of thumb</div>
+    Reach for <b>(a)</b> when a human is in the loop designing. Reach for <b>(b)</b> when you want cheap
+    automation to drive opus without a person at the keyboard. Either way the substantive answer comes from
+    first-party opus.</div>
+</section>
+
+<section id="loop">
+  <div class="kick"><span class="step">2</span>the rhythm</div>
+  <h2>The loop: orient → work → record</h2>
+  <p>Every session follows the same three beats, whichever flavor you run.</p>
+
+  <div class="fig">
+  <svg viewBox="0 0 760 150" role="img" aria-label="The orient, work, record loop around the shared brain">
+    <defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#22c3d6"/></marker></defs>
+    <style>.b{fill:#1b1f2a;stroke:#2c3346}.t{fill:#e7ebf3;font:600 13px "Segoe UI"}.s{fill:#8a93a6;font:10.5px "Segoe UI"}
+    .ln{stroke:#22c3d6;stroke-width:1.5;fill:none;marker-end:url(#ah)}</style>
+    <rect class="b" x="16" y="46" width="180" height="58" rx="10"/><text class="t" x="34" y="72">1 · Orient</text><text class="s" x="34" y="90">pull CG context (precedent)</text>
+    <rect class="b" x="290" y="46" width="180" height="58" rx="10" stroke="#5b8def"/><text class="t" x="308" y="72">2 · Work</text><text class="s" x="308" y="90">opus does it (first-party)</text>
+    <rect class="b" x="564" y="46" width="180" height="58" rx="10"/><text class="t" x="582" y="72">3 · Record</text><text class="s" x="582" y="90">decisions back to CG</text>
+    <path class="ln" d="M196,75 L 286,75"/>
+    <path class="ln" d="M470,75 L 560,75"/>
+    <path class="ln" d="M654,104 C 654,132 106,132 106,108"/><text class="s" x="330" y="128">next session starts oriented</text>
+  </svg>
+  </div>
+
+  <ul>
+    <li><b>Orient</b> — pull the team's context from the Context Graph (past decisions, precedent, learnings) so
+      the agent starts aligned instead of re-deriving. In flavor (b) the coordinator does this via the
+      <code>context-graph</code> MCP tools.</li>
+    <li><b>Work</b> — opus does the substantive task: the plan, the design, the code. This is always
+      first-party opus, never the coordinator.</li>
+    <li><b>Record</b> — write the decisions and learnings back to the Context Graph so the next session (yours or
+      a teammate's) inherits them.</li>
+  </ul>
+</section>
+
+<section id="coord">
+  <div class="kick"><span class="step">3</span>flavor (b) only</div>
+  <h2>Configure your coordinator (per-developer)</h2>
+  <p>The coordinator is a <b>per-developer</b> choice — your own hardware and keys. It lives in the project-local,
+  <b>gitignored</b> <code>&lt;project&gt;/.hermes/config.yaml</code>, never in the committed config. (Skip this
+  section entirely if you run flavor (a).)</p>
+
+  <h3>Recommended: Bedrock Gemma 4 31B</h3>
+  <p>Hosted, fast (~6–10s/turn), and capable enough for a light routing role. It's an OpenAI-compatible
+  endpoint:</p>
+  <pre><code><span class="kw">model</span>:
+  provider: custom
+  default: google.gemma-4-31b
+  base_url: https://bedrock-mantle.us-east-1.api.aws/openai/v1   <span class="cm"># regions: us-east-1/2, us-west-2, eu-central-1</span>
+  api_key: &lt;Bedrock API key / bearer token&gt;
+  context_length: 262144            <span class="cm"># 256K</span>
+  extra_body: { parallel_tool_calls: false }   <span class="cm"># REQUIRED — Bedrock Gemma 4 has no parallel tool calls; omit and it hangs</span></code></pre>
+  <div class="callout warn"><div class="cl">Required: parallel_tool_calls: false</div>
+    Bedrock Gemma 4 has no parallel tool calls. Leave <code>parallel_tool_calls: false</code> in
+    <code>extra_body</code> — omit it and the coordinator hangs.</div>
+  <p class="small">Auth is a <b>Bedrock API key</b> (a bearer token) used as the OpenAI <code>api_key</code>.
+  Note: a box's ambient IAM credentials may lack Bedrock permissions — use the bearer token, which is
+  account-scoped.</p>
+
+  <h3>Alternative: a local model</h3>
+  <p>A local model via llama.cpp or Ollama works too, but it must serve a <b>≥64K context window</b> — that's
+  Hermes's floor. For example:</p>
+  <pre><code>llama-server --ctx-size 65536</code></pre>
+  <p>Point <code>base_url</code> at it. Viable, but slower and weaker than Bedrock Gemma 4 31B (the local 12B
+  was too weak and too slow).</p>
+</section>
+
+<section id="run">
+  <div class="kick"><span class="step">4</span>run</div>
+  <h2>Running it</h2>
+  <p>Launch the Hermes-coordinator flavor from the project, pointing <code>HERMES_HOME</code> at the project's
+  own <code>.hermes/</code> home:</p>
+  <pre><code>HERMES_HOME=&lt;project&gt;/.hermes  /storage/Work/cohermes/.venv/bin/hermes chat</code></pre>
+  <p>That uses the durable venv, the per-developer <code>.hermes/</code> home, and the Context Graph MCP pinned
+  to the project's workspace. Each project keeps its own <code>.hermes/</code> — that's where your gitignored
+  <code>config.yaml</code> (coordinator model) and role policy live.</p>
+  <div class="callout key"><div class="cl">Per-project home</div>
+    <code>&lt;project&gt;/.hermes/</code> holds the coordinator config, the <code>SOUL.md</code> role policy
+    ("you are a coordinator; use <code>ask_claude</code> for all real work"), and session state. It is
+    per-developer and gitignored — your teammates each keep their own.</div>
+  <p class="small">For flavor (a), you don't run <code>hermes chat</code> at all — you run the real
+  <code>claude</code> (via <code>cohermes agent</code>) and opus is the agent directly. See the
+  <a href="SETUP.html">Setup Guide</a> for wiring.</p>
+</section>
+
+<section id="pays">
+  <div class="kick"><span class="step">5</span>the money</div>
+  <h2>What runs where / who pays</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Piece</th><th>Model</th><th>Who pays</th></tr></thead>
+    <tbody>
+      <tr><td>Coordinator (flavor b)</td><td>cheap model (e.g. Bedrock Gemma 4 31B)</td><td>small metered cost — the one accepted paid piece</td></tr>
+      <tr><td>Worker (all real work)</td><td>opus, first-party <code>claude</code></td><td>plan limits — no per-token bill</td></tr>
+    </tbody>
+  </table></div>
+  <p>The worker is where all the substantive reasoning happens, and it stays first-party opus — drawn from your
+  plan limits, not billed per token. The coordinator is a cheap model doing a light role, so its metered cost is
+  small. That split is the whole point: keep the expensive reasoning on plan limits, pay only pennies for
+  routing.</p>
+</section>
+
+<section id="trouble">
+  <div class="kick">if something's off</div>
+  <h2>Troubleshooting</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Symptom</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td>Coordinator hangs</td><td>Bedrock Gemma 4 has no parallel tool calls — set <code>extra_body: { parallel_tool_calls: false }</code> in your <code>.hermes/config.yaml</code>.</td></tr>
+      <tr><td>Local model misbehaves / truncates</td><td>It needs a served context window of <b>≥64K</b> (Hermes's floor). Serve it with e.g. <code>llama-server --ctx-size 65536</code>.</td></tr>
+      <tr><td>"Extra usage" HTTP 400</td><td>You routed real work through Hermes's own agent loop instead of the <code>claude</code> binary. Hermes-as-a-model is a third-party call that bills extra-usage; make sure substantive work goes through <code>ask_claude</code> → the real first-party <code>claude</code>, which draws from plan limits.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn"><div class="cl">Why the 400 happens</div>
+    Since Anthropic's 2026-07 policy change, third-party apps that authenticate with your subscription OAuth
+    token draw from paid "extra usage", not plan limits. Hermes's own loop is such a third-party call, so it
+    bills overage (400 when the balance is 0). Only the genuine <code>claude</code> binary is first-party — keep
+    all real reasoning there.</div>
+</section>
+
+</main>
+</div>
+<footer class="footer">cohermes — user manual · a fork of <a href="https://github.com/NousResearch/hermes-agent">hermes-agent</a> (MIT) · see also the <a href="SETUP.html">Setup Guide</a></footer>
+</body>
+</html>
