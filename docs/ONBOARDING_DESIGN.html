@@ -242,17 +242,18 @@ developer: dima</code></pre>
 <section id="run">
   <div class="kick"><span class="step">use</span>running it</div>
   <h2><code>cohermes run</code> — the two flavors, one config</h2>
-  <p>Both flavors read <code>.cohermes.yaml</code>, pin the workspace, apply the structured model, and scrub any
-  metered-billing env — so the operator never re-threads the wiring.</p>
+  <p>Both flavors read <code>.cohermes.yaml</code>, pin the workspace, and scrub metered-billing env. Crucially,
+  in <b>both</b> the actual reasoning runs on the real <code>claude</code> binary (first-party, plan limits) —
+  they differ only in what surrounds it.</p>
   <div class="tablewrap"><table>
     <thead><tr><th>Flavor</th><th>Command</th><th>What runs</th><th>Use when</th></tr></thead>
     <tbody>
-      <tr><td>Hermes runtime</td><td><code>cohermes hermes</code></td><td>the Hermes agent — its own loop, tools, memory — on the subscription model, CG MCP wired</td><td>autonomous / persistent dev sessions</td></tr>
-      <tr><td>Claude Code</td><td><code>cohermes agent</code></td><td>Claude Code, pre-briefed from the shared brain (orient injected at launch)</td><td>quick, brief-driven tasks</td></tr>
+      <tr><td>Claude Code</td><td><code>cohermes agent</code></td><td>the real <code>claude</code> binary directly (<code>claude -p</code> / interactive), pre-briefed from the brain — <b>first-party</b></td><td>quick, brief-driven tasks</td></tr>
+      <tr><td>Hermes runtime</td><td><code>cohermes hermes</code></td><td>a <b>developer-local</b> coordinator model orchestrates real <code>claude</code> subprocesses (the <code>claude-code</code> skill, <code>claude -p</code>/tmux) — first-party work, local coordination — plus Hermes's tools / memory / gateway</td><td>autonomous / persistent / multi-agent</td></tr>
     </tbody>
   </table></div>
-  <p class="small">Same idea as investigator's two launchers today — but the logic lives in the engine, and the
-  project only declares which flavors it wants.</p>
+  <p class="small">The heavy tokens are always the first-party <code>claude</code> subprocess (plan limits). The
+  Hermes coordinator's own turns run on a developer-chosen <b>local</b> model, so they cost nothing and never meter.</p>
 </section>
 
 <section id="ontology">
@@ -277,15 +278,31 @@ developer: dima</code></pre>
 
 <section id="a2">
   <div class="kick"><span class="step">A2</span>the hard rule</div>
-  <h2>Subscription-only, by construction</h2>
-  <p>A2 — agents run on the Claude subscription, never metered API billing — stops being something the operator
-  has to defend and becomes something onboarding <b>guarantees</b>:</p>
+  <h2>Subscription-only — and the two ways Hermes touches Claude</h2>
+  <p>A2 — agents run on the Claude subscription, never metered — is guaranteed by keeping <b>all real reasoning on
+  the first-party <code>claude</code> binary</b>. A hard-won distinction (2026-07): Hermes can reach Claude two ways,
+  and only one is first-party.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th></th><th>Mechanism</th><th>Billing</th></tr></thead>
+    <tbody>
+      <tr><td>✅ <b>the <code>claude</code> binary</b></td><td>Hermes runs <code>claude -p</code>/tmux as a subprocess (the <code>claude-code</code> skill); or <code>cohermes agent</code> spawns it directly</td><td><b>plan limits</b> — genuine first-party</td></tr>
+      <tr><td>❌ <b>coordinator-as-Claude</b></td><td>Hermes calls the Messages API with a <code>claude-code (external, cli)</code> user-agent using your OAuth token</td><td><b>extra usage</b> — metered</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn"><div class="cl">The 2026-07 policy change</div>
+  Anthropic now routes <b>third-party apps</b> using your subscription OAuth token through <b>"extra usage"</b>
+  (a paid overage), not your plan limits. So we never route real work through path ❌ — that's the whole point of
+  keeping the worker on the actual binary.</div>
+  <p>The design splits the roles accordingly:</p>
   <ul>
-    <li>the model is always written in the structured, concrete form that routes to the anthropic Messages
-      endpoint (the subscription path), closing the Bedrock-fallback and alias-404 traps;</li>
-    <li>launchers scrub <code>ANTHROPIC_API_KEY</code> and the cloud-provider vars on every run;</li>
-    <li>onboarding <b>refuses to write</b> a metered key, and <code>cohermes doctor</code> fails loudly if one is present;</li>
-    <li>auth is verified as a subscription (via the local <code>claude</code> login) before anything launches.</li>
+    <li><b>Worker = the real <code>claude</code> binary</b> — all actual coding/reasoning. First-party, plan limits.</li>
+    <li><b>Coordinator = a developer-local model</b> — Hermes's own orchestration turns run on a local model
+      (llama.cpp / Ollama), so they never meter. This is a <b>per-developer</b> setting (each dev runs their own
+      hardware), kept in a <em>gitignored</em> override — <b>not</b> the committed <code>.cohermes.yaml</code> — and
+      easy to change: <code>cohermes coordinator set --base-url … --model …</code>. Onboarding auto-detects a local
+      endpoint. (Note: the coordinator model needs a ≥64K served context window — Hermes's floor.)</li>
+    <li>launchers scrub <code>ANTHROPIC_API_KEY</code> + cloud vars; onboarding <b>refuses to write</b> a metered key,
+      and <code>cohermes doctor</code> fails loudly on one.</li>
   </ul>
 </section>
 
