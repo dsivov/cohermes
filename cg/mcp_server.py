@@ -100,17 +100,44 @@ def record_learning(title: str, insight: str, developer: str, about: str = "",
     return f"recorded learning '{title}' (conf {confidence}, by {developer}){tail}"
 
 
+def _record_outcome(task: str, output: str) -> None:
+    """Land a delegated task's outcome in Context Graph as a searchable decision
+    trace (WRITE half of the loop) — so the shared brain accumulates from real work
+    and a future orient()/precedent search finds it. Ontology-neutral (a trace, not
+    a typed node) so it never forks a project's own decision model. Best-effort."""
+    import requests
+    first = (task.strip().splitlines() or [""])[0]
+    title = ("delegated: " + first)[:90]
+    trace = (f"Delegated to opus (ask_claude): {task.strip()[:400]}\n\n"
+             f"Outcome:\n{output.strip()[:1500]}")
+    try:
+        requests.post(
+            f"{config.SERVER_URL.rstrip('/')}/graph/decision/emit",
+            headers=config.headers(),
+            json={"src": title, "tgt": "opus-delegation", "relation_type": "produced",
+                  "relation_context": {
+                      "decision_trace": trace,
+                      "approved_by": config.DEVELOPER or "coordinator",
+                      "provenance": "ask_claude", "confidence_score": 0.7}},
+            timeout=30)
+    except Exception:  # noqa: BLE001 — recording must never break the delegation
+        pass
+
+
 @mcp.tool()
-def ask_claude(task: str, workdir: str = ".", max_turns: int = 20) -> str:
+def ask_claude(task: str, workdir: str = ".", max_turns: int = 20, record: bool = True) -> str:
     """Delegate a task to Claude Code (opus) — the FIRST-PARTY `claude` binary on the
-    Claude subscription. Runs the real Claude Code CLI and returns its output.
+    Claude subscription — and close the shared-brain loop around it.
 
     USE THIS FOR ALL SUBSTANTIVE WORK: work plans, architecture, design, decisions,
     analysis, and any code. As the coordinator you must NOT produce these yourself —
-    pass the user's request here verbatim (plus any context) and relay the result.
-    `workdir` is the project directory Claude runs in (it auto-reads CLAUDE.md + the
-    repo, so you rarely need to paste files). This tool constructs the invocation
-    safely, so you never hand-build shell strings."""
+    pass the user's request here verbatim and relay the result. This tool:
+      1. READS the team brain — pulls Context Graph precedent/context for the task and
+         injects it so opus reuses prior decisions instead of re-deriving them;
+      2. runs opus (real `claude -p`, first-party, safe arg-passing — no shell strings);
+      3. WRITES the outcome back to Context Graph as a searchable trace (set
+         `record=False` for throwaway/trivial tasks) so the brain compounds.
+    `workdir` is the project directory opus runs in (auto-reads CLAUDE.md + the repo)."""
     import os
     import subprocess
 
@@ -119,10 +146,21 @@ def ask_claude(task: str, workdir: str = ".", max_turns: int = 20) -> str:
     env = {k: v for k, v in os.environ.items() if k not in (
         "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN",
         "CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX", "CLAUDE_CODE_USE_FOUNDRY")}
+
+    # 1) READ — ground opus in the shared brain (precedents + learnings + context).
+    cmd = ["claude", "-p", task, "--max-turns", str(max_turns)]
     try:
-        proc = subprocess.run(
-            ["claude", "-p", task, "--max-turns", str(max_turns)],
-            cwd=wd, env=env, capture_output=True, text=True, timeout=900)
+        brief = (_orient.brief(task) or "").strip()
+    except Exception:  # noqa: BLE001
+        brief = ""
+    if brief:
+        cmd += ["--append-system-prompt",
+                "## Team brain (Context Graph) — reuse this, do not re-derive:\n\n" + brief]
+
+    # 2) WORK — opus, first-party.
+    try:
+        proc = subprocess.run(cmd, cwd=wd, env=env,
+                              capture_output=True, text=True, timeout=900)
     except FileNotFoundError:
         return "ERROR: the `claude` CLI is not installed or not on PATH."
     except subprocess.TimeoutExpired:
@@ -131,7 +169,12 @@ def ask_claude(task: str, workdir: str = ".", max_turns: int = 20) -> str:
     err = (proc.stderr or "").strip()
     if proc.returncode != 0 and not out:
         return f"ERROR (claude exit {proc.returncode}): {err[:500]}"
-    return out or err or "(no output)"
+    result = out or err or "(no output)"
+
+    # 3) WRITE — land the outcome in the brain so it accumulates + stays searchable.
+    if record and out and not result.startswith("ERROR"):
+        _record_outcome(task, result)
+    return result
 
 
 @mcp.tool()
