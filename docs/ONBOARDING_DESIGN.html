@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cohermes — Universal Onboarding (design)</title>
+<style>
+:root{--bg:#0f1117;--panel:#1b1f2a;--panel2:#222736;--ink:#e7ebf3;--ink-soft:#aab3c5;--ink-faint:#7b8499;
+--line:#2c3346;--line-soft:#232a3a;--a:#5b8def;--b:#19b89a;--c:#f0a73c;--ctrl:#22c3d6;--ok:#3ecf8e;--danger:#ef5b6e;
+--mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;--maxw:1080px;--radius:14px;
+--shadow:0 10px 30px rgba(0,0,0,.35);}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(1100px 600px at 82% -10%,rgba(34,195,214,.10),transparent 60%),
+radial-gradient(900px 520px at -10% 8%,rgba(25,184,154,.08),transparent 55%),var(--bg);
+color:var(--ink);font:16px/1.7 "Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif}
+a{color:var(--a);text-decoration:none}a:hover{text-decoration:underline}
+code,pre,.mono{font-family:var(--mono)}svg{max-width:100%;height:auto}
+.hero{padding:64px 22px 30px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(34,195,214,.07),transparent)}
+.hero-inner{max-width:880px;margin:0 auto}
+.eyebrow{letter-spacing:.22em;text-transform:uppercase;font-size:12px;color:var(--ink-faint);font-weight:700}
+.hero h1{font-size:clamp(30px,5vw,48px);margin:.3em 0 .2em;background:linear-gradient(92deg,#bdf0ea,#8fb4d9 55%,#a7ecf5);
+-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{font-size:clamp(16px,2vw,20px);color:var(--ink-soft)}
+.layout{max-width:var(--maxw);margin:0 auto;display:grid;grid-template-columns:220px 1fr;gap:38px;padding:28px 22px 90px}
+nav.toc{position:sticky;top:16px;align-self:start;max-height:calc(100vh - 32px);overflow:auto;border:1px solid var(--line);
+border-radius:var(--radius);background:var(--panel);padding:12px}
+nav.toc .tl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin:4px 6px 8px}
+nav.toc ol{list-style:none;margin:0;padding:0;counter-reset:t}nav.toc li{counter-increment:t}
+nav.toc a{display:flex;gap:8px;padding:5px 8px;border-radius:8px;color:var(--ink-soft);font-size:13px}
+nav.toc a::before{content:counter(t,decimal-leading-zero);color:var(--ink-faint);font-family:var(--mono);font-size:11px}
+nav.toc a:hover{background:var(--panel2);color:var(--ink);text-decoration:none}
+main{min-width:0;max-width:760px}section{margin:0 0 46px;scroll-margin-top:18px}
+h2{font-size:clamp(21px,3vw,28px);margin:0 0 6px}h3{font-size:18px;margin:24px 0 6px}
+.kick{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ctrl);font-weight:700;margin-bottom:6px}
+p{margin:.6em 0}.small{font-size:13.5px;color:var(--ink-faint)}
+ul,ol{padding-left:20px}li{margin:.28em 0}
+pre{background:#0c0e14;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow:auto;font-size:13px;line-height:1.55}
+pre code{color:#d6deec}.cm{color:#5c6685}.kw{color:#7aa2f7}.str{color:#9ece6a}
+code:not(pre code){background:#161922;border:1px solid var(--line-soft);border-radius:5px;padding:1px 5px;font-size:13px}
+.callout{border-radius:12px;padding:13px 15px;border:1px solid var(--line);background:var(--panel2);margin:16px 0}
+.callout .cl{font-weight:700;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+.callout.key{border-color:rgba(34,195,214,.55);background:rgba(34,195,214,.10)}.callout.key .cl{color:#8fe6f2}
+.callout.ok{border-color:rgba(62,207,142,.5);background:rgba(62,207,142,.08)}.callout.ok .cl{color:#7ee3b4}
+.callout.warn{border-color:rgba(240,167,60,.5);background:rgba(240,167,60,.08)}.callout.warn .cl{color:#ffce86}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px;margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th{background:var(--panel2);text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--ink-soft)}
+td{padding:9px 11px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+.fig{background:#12151d;border:1px solid var(--line-soft);border-radius:12px;padding:15px;margin:16px 0}
+.fig .cap{font-size:12.5px;color:var(--ink-faint);margin-top:9px}
+.step{display:inline-block;background:rgba(34,195,214,.16);color:#8fe6f2;border:1px solid rgba(34,195,214,.4);
+border-radius:999px;font-size:12px;font-weight:700;padding:1px 10px;margin-right:8px}
+.pill{display:inline-block;border-radius:999px;font-size:11.5px;font-weight:700;padding:1px 9px;border:1px solid var(--line)}
+.pill.d{background:rgba(91,141,239,.15);color:#9dbcff;border-color:rgba(91,141,239,.4)}
+.footer{max-width:var(--maxw);margin:0 auto;padding:26px 22px 60px;color:var(--ink-faint);font-size:13px;border-top:1px solid var(--line)}
+@media(max-width:900px){.layout{grid-template-columns:1fr}nav.toc{display:none}main{max-width:none}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="hero-inner">
+  <div class="eyebrow">cohermes · design log</div>
+  <h1>Universal onboarding</h1>
+  <p class="lede">One command to bring any project into the cohermes model — Hermes runtime + Context Graph brain
+  + Claude subscription — replacing the artisanal, per-project wiring with something that carries the methodology itself.</p>
+</div></header>
+
+<div class="layout">
+<nav class="toc"><div class="tl">Contents</div><ol>
+  <li><a href="#problem">The problem</a></li>
+  <li><a href="#traps">What onboarding must encode</a></li>
+  <li><a href="#model">The model: CLI + <code>.cohermes.yaml</code></a></li>
+  <li><a href="#onboard">cohermes onboard</a></li>
+  <li><a href="#run">cohermes run — two flavors</a></li>
+  <li><a href="#ontology">Ontology: generate &amp; preserve</a></li>
+  <li><a href="#a2">A2 by construction</a></li>
+  <li><a href="#ui">The optional UI</a></li>
+  <li><a href="#decisions">Decisions</a></li>
+  <li><a href="#plan">Build plan</a></li>
+</ol></nav>
+
+<main>
+
+<section id="problem">
+  <div class="kick">Why we're here</div>
+  <h2>The problem: onboarding is artisanal</h2>
+  <p>Bringing the <b>investigator</b> project into cohermes worked — but by hand. I wrote two launcher
+  scripts (<code>cg/hermes</code>, <code>cg/cohermes-agent</code>), a <code>.hermes.md</code> working
+  agreement, and a project-local Hermes home config, and threaded the workspace name through all of them.
+  Every one of those steps encodes a lesson that a <em>new</em> project has no way to know.</p>
+  <p>That doesn't scale, and it buries hard-won knowledge in per-repo bash. A fresh project starts blank:
+  it doesn't know which CG workspace holds its memory, how to reach Claude on the subscription (not metered),
+  or that this team records decisions through governed actions. Onboarding has to <b>supply</b> that
+  knowledge, consistently, without the operator re-deriving it each time.</p>
+  <div class="callout key"><div class="cl">The goal</div>
+  A project should become <b>self-describing</b> to cohermes — declare a little, inherit the whole methodology.
+  The knowledge lives in the tool, not copied into every repo.</div>
+</section>
+
+<section id="traps">
+  <div class="kick">The hard part</div>
+  <h2>What onboarding must encode — the six traps</h2>
+  <p>Universal onboarding is only worth building if it bakes in the traps I hit by hand. Each one silently
+  breaks a project that a naïve setup would leave for the next person to rediscover.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Trap</th><th>What goes wrong</th><th>Encoded fix</th></tr></thead>
+    <tbody>
+      <tr><td><b>Amnesia</b></td><td>defaults to workspace <code>team_agent_lab</code>, not the project's — agent starts with no history</td><td>pin the project's workspace everywhere</td></tr>
+      <tr><td><b>Metered Bedrock</b></td><td>bare <code>model: claude-code</code> fails validation → falls back to AWS Bedrock (<b>billed!</b>) when creds are present</td><td>structured <code>{provider: anthropic, default: &lt;concrete&gt;}</code></td></tr>
+      <tr><td><b>Alias 404</b></td><td><code>default: claude-code</code> is an alias, not a real API model id → 404</td><td>a concrete model id (e.g. <code>claude-opus-4-8</code>)</td></tr>
+      <tr><td><b>Scratchpad fragility</b></td><td>install in a temp venv that gets cleaned → launcher dies later</td><td>one durable install on <span class="mono">PATH</span></td></tr>
+      <tr><td><b>Clobbering</b></td><td>the old preset overwrote <code>.mcp.json</code> and force-installed the team ontology</td><td>detect + merge; never overwrite</td></tr>
+      <tr><td><b>Methodology-blindness</b></td><td>the agent has no idea about CG, precedent-first, or governed actions</td><td>ship an auto-loaded working agreement</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small">The subscription-vs-metered ones (2, 3) aren't just bugs — they're an <b>A2</b> violation (our
+  hard rule: subscription auth only). See §7.</p>
+</section>
+
+<section id="model">
+  <div class="kick"><span class="step">core</span>the shape</div>
+  <h2>The model: one CLI + a tiny <code>.cohermes.yaml</code></h2>
+  <p>Stop generating bespoke scripts. Instead: <b>one durable <code>cohermes</code> command on PATH</b> (the
+  engine that holds all the trap-fixes), plus a <b>small committed <code>.cohermes.yaml</code></b> per project
+  that makes the repo self-describing. The command reads the config and does the right thing from any onboarded
+  directory.</p>
+
+  <div class="fig">
+  <svg viewBox="0 0 720 300" role="img" aria-label="cohermes onboarding architecture">
+    <defs>
+      <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+        <path d="M0,0 L9,4.5 L0,9 z" fill="#5b8def"/></marker>
+    </defs>
+    <!-- engine -->
+    <rect x="14" y="70" width="196" height="160" rx="12" fill="#161b28" stroke="#2c3346"/>
+    <text x="112" y="96" text-anchor="middle" fill="#8fe6f2" font-size="13" font-weight="700">durable cohermes</text>
+    <text x="112" y="113" text-anchor="middle" fill="#7b8499" font-size="11">the engine · on PATH</text>
+    <text x="30" y="140" fill="#aab3c5" font-size="11">• onboard / run logic</text>
+    <text x="30" y="160" fill="#aab3c5" font-size="11">• the 6 traps, encoded</text>
+    <text x="30" y="180" fill="#aab3c5" font-size="11">• model + MCP wiring</text>
+    <text x="30" y="200" fill="#aab3c5" font-size="11">• A2 auth guard</text>
+    <!-- project -->
+    <rect x="262" y="52" width="196" height="196" rx="12" fill="#12151d" stroke="#232a3a"/>
+    <text x="360" y="78" text-anchor="middle" fill="#e7ebf3" font-size="13" font-weight="700">the project</text>
+    <rect x="278" y="92" width="164" height="30" rx="7" fill="#1b2333" stroke="#2c3346"/>
+    <text x="360" y="111" text-anchor="middle" fill="#9dbcff" font-size="11" font-family="monospace">.cohermes.yaml</text>
+    <rect x="278" y="128" width="164" height="30" rx="7" fill="#1b2333" stroke="#2c3346"/>
+    <text x="360" y="147" text-anchor="middle" fill="#7ee3b4" font-size="11" font-family="monospace">.hermes.md / CLAUDE.md</text>
+    <rect x="278" y="164" width="164" height="30" rx="7" fill="#1b2333" stroke="#2c3346"/>
+    <text x="360" y="183" text-anchor="middle" fill="#ffce86" font-size="11" font-family="monospace">.hermes/ (local, ignored)</text>
+    <text x="360" y="222" text-anchor="middle" fill="#7b8499" font-size="10.5">committed = "the repo knows the methodology"</text>
+    <!-- backends -->
+    <rect x="512" y="60" width="196" height="66" rx="12" fill="#161b28" stroke="#2c3346"/>
+    <text x="610" y="88" text-anchor="middle" fill="#7ee3b4" font-size="12.5" font-weight="700">CG workspace</text>
+    <text x="610" y="106" text-anchor="middle" fill="#7b8499" font-size="10.5">decisions · ontology · actions</text>
+    <rect x="512" y="174" width="196" height="66" rx="12" fill="#161b28" stroke="#2c3346"/>
+    <text x="610" y="202" text-anchor="middle" fill="#8fe6f2" font-size="12.5" font-weight="700">Claude subscription</text>
+    <text x="610" y="220" text-anchor="middle" fill="#7b8499" font-size="10.5">anthropic Messages · never metered</text>
+    <!-- arrows -->
+    <line x1="210" y1="150" x2="258" y2="150" stroke="#5b8def" stroke-width="1.6" marker-end="url(#ar)"/>
+    <text x="234" y="142" text-anchor="middle" fill="#7b8499" font-size="9.5">reads</text>
+    <line x1="458" y1="120" x2="508" y2="96" stroke="#5b8def" stroke-width="1.6" marker-end="url(#ar)"/>
+    <line x1="458" y1="180" x2="508" y2="204" stroke="#5b8def" stroke-width="1.6" marker-end="url(#ar)"/>
+    <text x="486" y="112" text-anchor="middle" fill="#7b8499" font-size="9.5">wires</text>
+  </svg>
+  <div class="cap">The engine carries the knowledge; the project declares a few facts; the backends are shared.</div>
+  </div>
+
+  <pre><code><span class="cm"># .cohermes.yaml — committed to the repo</span>
+workspace: investigator
+cg_url:    http://localhost:9621
+model:     {provider: anthropic, default: claude-opus-4-8}
+ontology:  generate          <span class="cm"># generate | existing | team</span>
+flavors:   [hermes, claude]   <span class="cm"># which run modes to enable</span>
+developer: dima</code></pre>
+
+  <div class="tablewrap"><table>
+    <thead><tr><th>Command</th><th>Does</th></tr></thead>
+    <tbody>
+      <tr><td><code>cohermes onboard [dir]</code></td><td>the universal onboarder — §4</td></tr>
+      <tr><td><code>cohermes hermes [task]</code></td><td>run the Hermes runtime flavor — §5</td></tr>
+      <tr><td><code>cohermes agent [task]</code></td><td>run the Claude Code + orient-brief flavor — §5</td></tr>
+      <tr><td><code>cohermes doctor</code></td><td>verify wiring, auth (A2), CG reachability, model resolution</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small">This retires the per-project <code>cg/hermes</code> + <code>cg/cohermes-agent</code> scripts:
+  their logic moves into the engine; the repo keeps only <code>.cohermes.yaml</code> + the working agreement.</p>
+</section>
+
+<section id="onboard">
+  <div class="kick"><span class="step">flow</span>the onboarder</div>
+  <h2><code>cohermes onboard</code> — non-destructive by default</h2>
+
+  <div class="fig">
+  <svg viewBox="0 0 720 120" role="img" aria-label="onboard pipeline">
+    <defs>
+      <marker id="ar2" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+        <path d="M0,0 L9,4.5 L0,9 z" fill="#19b89a"/></marker>
+    </defs>
+    <g font-size="11.5" font-weight="700" text-anchor="middle">
+      <rect x="8"   y="40" width="118" height="44" rx="9" fill="#161b28" stroke="#2c3346"/><text x="67"  y="66" fill="#8fe6f2">preflight</text>
+      <rect x="150" y="40" width="118" height="44" rx="9" fill="#161b28" stroke="#2c3346"/><text x="209" y="66" fill="#9dbcff">detect</text>
+      <rect x="292" y="40" width="128" height="44" rx="9" fill="#161b28" stroke="#2c3346"/><text x="356" y="61" fill="#7ee3b4">CG setup</text><text x="356" y="76" fill="#7b8499" font-weight="400" font-size="9.5">ontology wizard</text>
+      <rect x="444" y="40" width="128" height="44" rx="9" fill="#161b28" stroke="#2c3346"/><text x="508" y="61" fill="#ffce86">client wiring</text><text x="508" y="76" fill="#7b8499" font-weight="400" font-size="9.5">additive / merge</text>
+      <rect x="596" y="40" width="116" height="44" rx="9" fill="#161b28" stroke="#2c3346"/><text x="654" y="66" fill="#3ecf8e">verify</text>
+    </g>
+    <g stroke="#19b89a" stroke-width="1.6">
+      <line x1="126" y1="62" x2="148" y2="62" marker-end="url(#ar2)"/>
+      <line x1="268" y1="62" x2="290" y2="62" marker-end="url(#ar2)"/>
+      <line x1="420" y1="62" x2="442" y2="62" marker-end="url(#ar2)"/>
+      <line x1="572" y1="62" x2="594" y2="62" marker-end="url(#ar2)"/>
+    </g>
+  </svg>
+  <div class="cap">Idempotent; every write is additive or a merge. Re-running is safe.</div>
+  </div>
+
+  <p><span class="step">1</span><b>Preflight.</b> CG reachable? Claude logged in on a subscription (A2)? A durable
+  cohermes install present? Each is checked and, where possible, offered a fix — never assumed.</p>
+  <p><span class="step">2</span><b>Detect.</b> Does the workspace already exist and hold records / an ontology?
+  Does the repo already have a <code>.mcp.json</code>? Existing state is <b>preserved and reported</b>, not
+  overwritten. This is the investigator lesson made structural.</p>
+  <p><span class="step">3</span><b>CG-side setup.</b> For a fresh workspace, run CG's conversational
+  <b>onboarding wizard</b> (<code>/onboard</code>, <code>/onboard/chat</code>, <code>/onboard/apply</code>) to
+  generate a project-fit ontology + action set. If the workspace already has one, keep it (§6). Optional curated
+  git/docs backfill.</p>
+  <p><span class="step">4</span><b>Client wiring</b> — all additive:</p>
+  <ul>
+    <li>write <code>.cohermes.yaml</code>;</li>
+    <li>generate the project-local Hermes home (<code>.hermes/</code>) with the <b>structured</b> model +
+      the <code>context-graph</code> MCP pinned to the workspace via the <code>LIGHTRAG-WORKSPACE</code> header;</li>
+    <li><b>merge</b> <code>context-graph</code> into any existing <code>.mcp.json</code> (Claude Code flavor) — never overwrite;</li>
+    <li>write the working agreement — <code>.hermes.md</code> (Hermes) and/or <code>CLAUDE.md</code> (Claude Code) — pointing at the CG protocol;</li>
+    <li>gitignore the local home.</li>
+  </ul>
+  <p><span class="step">5</span><b>Verify.</b> A read-only smoke test — orient / precedent query — confirms the
+  agent reaches the right workspace on the subscription, then prints a report and next steps.</p>
+
+  <div class="callout warn"><div class="cl">Non-destructive invariant</div>
+  Onboarding never overwrites an existing <code>.mcp.json</code>, never wipes an ontology, and never writes a
+  metered key. If it can't do something safely, it reports and asks — it doesn't guess.</div>
+</section>
+
+<section id="run">
+  <div class="kick"><span class="step">use</span>running it</div>
+  <h2><code>cohermes run</code> — the two flavors, one config</h2>
+  <p>Both flavors read <code>.cohermes.yaml</code>, pin the workspace, apply the structured model, and scrub any
+  metered-billing env — so the operator never re-threads the wiring.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Flavor</th><th>Command</th><th>What runs</th><th>Use when</th></tr></thead>
+    <tbody>
+      <tr><td>Hermes runtime</td><td><code>cohermes hermes</code></td><td>the Hermes agent — its own loop, tools, memory — on the subscription model, CG MCP wired</td><td>autonomous / persistent dev sessions</td></tr>
+      <tr><td>Claude Code</td><td><code>cohermes agent</code></td><td>Claude Code, pre-briefed from the shared brain (orient injected at launch)</td><td>quick, brief-driven tasks</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small">Same idea as investigator's two launchers today — but the logic lives in the engine, and the
+  project only declares which flavors it wants.</p>
+</section>
+
+<section id="ontology">
+  <div class="kick"><span class="step">D2</span>the memory shape</div>
+  <h2>Ontology: conversational generate, with detect-and-preserve</h2>
+  <p><b>Default = conversational generation.</b> For a new project, onboarding runs CG's LLM wizard: a short
+  interview about the project's objects and moves, and it generates a project-fit ontology + governed action set —
+  richer and more accurate than forcing one shape on every project.</p>
+  <p>But generation is <b>gated by detection</b>. If the workspace already has an ontology and recorded history
+  (investigator's <code>ChangeRequest / ADR / Task / Module</code> + <code>investigator_dev</code> actions), the
+  onboarder <b>preserves it</b> — the wizard confirms/augments rather than forking a parallel decision model.
+  The <code>ontology:</code> field records intent:</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th><code>ontology:</code></th><th>Behavior</th></tr></thead>
+    <tbody>
+      <tr><td><code>generate</code></td><td>run the CG wizard (default for a fresh workspace)</td></tr>
+      <tr><td><code>existing</code></td><td>reuse what's already in the workspace, untouched (investigator)</td></tr>
+      <tr><td><code>team</code></td><td>install the standard 4-artifact ontology (Decision→Task→Commit→Review)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="a2">
+  <div class="kick"><span class="step">A2</span>the hard rule</div>
+  <h2>Subscription-only, by construction</h2>
+  <p>A2 — agents run on the Claude subscription, never metered API billing — stops being something the operator
+  has to defend and becomes something onboarding <b>guarantees</b>:</p>
+  <ul>
+    <li>the model is always written in the structured, concrete form that routes to the anthropic Messages
+      endpoint (the subscription path), closing the Bedrock-fallback and alias-404 traps;</li>
+    <li>launchers scrub <code>ANTHROPIC_API_KEY</code> and the cloud-provider vars on every run;</li>
+    <li>onboarding <b>refuses to write</b> a metered key, and <code>cohermes doctor</code> fails loudly if one is present;</li>
+    <li>auth is verified as a subscription (via the local <code>claude</code> login) before anything launches.</li>
+  </ul>
+</section>
+
+<section id="ui">
+  <div class="kick"><span class="step">D4</span>optional, later</div>
+  <h2>The UI configurator</h2>
+  <p>The Hermes dashboard already ships Config / Models / Mcp pages. A future <code>cohermes onboard --ui</code>
+  can drive the same onboarding <b>engine</b> through a small wizard for people who'd rather click than type —
+  workspace pick, ontology interview, flavor toggles, a live A2/CG health panel.</p>
+  <p>But it's a convenience layer, not the core. We build the CLI onboarder first and keep the UI as a thin front
+  end over it — so there's exactly one implementation of the six trap-fixes.</p>
+</section>
+
+<section id="decisions">
+  <div class="kick">the record</div>
+  <h2>Decisions</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>#</th><th>Decision</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill d">O1</span></td><td>Global <code>cohermes</code> CLI + committed <code>.cohermes.yaml</code></td><td>knowledge in the tool, not copied per-repo; the project becomes self-describing; retires bespoke scripts</td></tr>
+      <tr><td><span class="pill d">O2</span></td><td>Ontology default = <b>conversational generate</b>, gated by detect-and-preserve</td><td>best fit per project without forking an existing decision model</td></tr>
+      <tr><td><span class="pill d">O3</span></td><td>Design doc first, then build</td><td>lock the shape before writing code — house practice</td></tr>
+      <tr><td><span class="pill d">O4</span></td><td>CLI-first; UI as a later optional layer over the same engine</td><td>one robust implementation; UI is convenience</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="plan">
+  <div class="kick">next</div>
+  <h2>Build plan</h2>
+  <p><span class="step">P1</span><b>Engine + config.</b> Ship the durable <code>cohermes</code> command,
+  the <code>.cohermes.yaml</code> schema, and <code>cohermes onboard / hermes / agent / doctor</code> — with the
+  six traps and the non-destructive detect+merge encoded once.</p>
+  <p><span class="step">P2</span><b>Conversational ontology.</b> Wire <code>onboard</code> into CG's
+  <code>/onboard*</code> wizard for fresh workspaces; detect-and-preserve for existing ones.</p>
+  <p><span class="step">P3</span><b>Migrate investigator</b> to <code>.cohermes.yaml</code> (retire
+  <code>cg/hermes</code> + <code>cg/cohermes-agent</code>) as the first real regression test — same behavior,
+  no bespoke bash.</p>
+  <p><span class="step">P4</span><b>Optional UI</b> — a dashboard wizard over the onboard engine.</p>
+  <div class="callout ok"><div class="cl">First proof</div>
+  Success = <code>cohermes onboard</code> on a brand-new empty project produces a working, subscription-only,
+  workspace-pinned, methodology-aware setup with zero hand-edits — and re-running it on investigator changes nothing.</div>
+</section>
+
+</main>
+</div>
+<footer class="footer">cohermes — universal onboarding design · working log · companion to
+<code>docs/SETUP.html</code> and <code>docs/TEAM_AGENT_FRAMEWORK.html</code>.</footer>
+</body>
+</html>
