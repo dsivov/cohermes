@@ -124,20 +124,10 @@ def _record_outcome(task: str, output: str) -> None:
         pass
 
 
-@mcp.tool()
-def ask_claude(task: str, workdir: str = ".", max_turns: int = 20, record: bool = True) -> str:
-    """Delegate a task to Claude Code (opus) — the FIRST-PARTY `claude` binary on the
-    Claude subscription — and close the shared-brain loop around it.
-
-    USE THIS FOR ALL SUBSTANTIVE WORK: work plans, architecture, design, decisions,
-    analysis, and any code. As the coordinator you must NOT produce these yourself —
-    pass the user's request here verbatim and relay the result. This tool:
-      1. READS the team brain — pulls Context Graph precedent/context for the task and
-         injects it so opus reuses prior decisions instead of re-deriving them;
-      2. runs opus (real `claude -p`, first-party, safe arg-passing — no shell strings);
-      3. WRITES the outcome back to Context Graph as a searchable trace (set
-         `record=False` for throwaway/trivial tasks) so the brain compounds.
-    `workdir` is the project directory opus runs in (auto-reads CLAUDE.md + the repo)."""
+def _ask_claude_blocking(task: str, workdir: str, max_turns: int,
+                         record: bool, write: bool) -> str:
+    """Blocking body of ask_claude — runs in a worker thread so the MCP server's
+    event loop stays responsive (answers keepalives) during the long opus run."""
     import os
     import subprocess
 
@@ -149,6 +139,9 @@ def ask_claude(task: str, workdir: str = ".", max_turns: int = 20, record: bool 
 
     # 1) READ — ground opus in the shared brain (precedents + learnings + context).
     cmd = ["claude", "-p", task, "--max-turns", str(max_turns)]
+    if write:
+        # implementation mode: let opus actually edit files / run commands / tests.
+        cmd.append("--dangerously-skip-permissions")
     try:
         brief = (_orient.brief(task) or "").strip()
     except Exception:  # noqa: BLE001
@@ -157,14 +150,14 @@ def ask_claude(task: str, workdir: str = ".", max_turns: int = 20, record: bool 
         cmd += ["--append-system-prompt",
                 "## Team brain (Context Graph) — reuse this, do not re-derive:\n\n" + brief]
 
-    # 2) WORK — opus, first-party.
+    # 2) WORK — opus, first-party. Timeout matches the raised MCP call window (30 min).
     try:
         proc = subprocess.run(cmd, cwd=wd, env=env,
-                              capture_output=True, text=True, timeout=900)
+                              capture_output=True, text=True, timeout=1800)
     except FileNotFoundError:
         return "ERROR: the `claude` CLI is not installed or not on PATH."
     except subprocess.TimeoutExpired:
-        return "ERROR: Claude Code timed out (900s)."
+        return "ERROR: Claude Code timed out (1800s)."
     out = (proc.stdout or "").strip()
     err = (proc.stderr or "").strip()
     if proc.returncode != 0 and not out:
@@ -175,6 +168,34 @@ def ask_claude(task: str, workdir: str = ".", max_turns: int = 20, record: bool 
     if record and out and not result.startswith("ERROR"):
         _record_outcome(task, result)
     return result
+
+
+@mcp.tool()
+async def ask_claude(task: str, workdir: str = ".", max_turns: int = 20,
+                     record: bool = True, write: bool = False) -> str:
+    """Delegate a task to Claude Code (opus) — the FIRST-PARTY `claude` binary on the
+    Claude subscription — and close the shared-brain loop around it.
+
+    USE THIS FOR ALL SUBSTANTIVE WORK: work plans, architecture, design, decisions,
+    analysis, and any code. As the coordinator you must NOT produce these yourself —
+    pass the user's request here verbatim and relay the result. This tool:
+      1. READS the team brain — pulls Context Graph precedent/context for the task and
+         injects it so opus reuses prior decisions instead of re-deriving them;
+      2. runs opus (real `claude -p`, first-party, safe arg-passing — no shell strings);
+      3. WRITES the outcome back to Context Graph as a searchable trace (set
+         `record=False` for throwaway/trivial tasks) so the brain compounds.
+
+    `write`: leave FALSE (default) for read-only work — plans, architecture, design,
+    review, analysis (opus reads the repo but does not modify it). Set write=TRUE for
+    tasks that must EDIT FILES or RUN COMMANDS — implement / fix / refactor / add
+    tests / run the build — which gives opus full autonomy in the project directory.
+    `workdir` is the project directory opus runs in (auto-reads CLAUDE.md + the repo).
+
+    Long runs are fine: opus runs off the MCP event loop, so the server stays
+    responsive; a big implementation can take many minutes."""
+    import asyncio
+    return await asyncio.to_thread(
+        _ask_claude_blocking, task, workdir, max_turns, record, write)
 
 
 @mcp.tool()
