@@ -253,32 +253,34 @@ def delegate_claude(task: str, workdir: str = ".", write: bool = False,
 
     perm = "--dangerously-skip-permissions " if write else ""
     brief_arg = f'--append-system-prompt-file "{brieff}" ' if brief else ""
-    # Generate a runscript (no shell-quoting of task/brief — they're read from files).
-    script = (
-        "#!/usr/bin/env bash\n"
-        f"cd {wd}\n"
-        "unset ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN CLAUDE_CODE_USE_BEDROCK "
-        "CLAUDE_CODE_USE_VERTEX CLAUDE_CODE_USE_FOUNDRY 2>/dev/null || true\n"
-        f'claude -p "$(cat {taskf})" {brief_arg}{perm}--max-turns {max_turns} --verbose 2>&1 | tee {logf}\n'
-        f'echo "{_DONE_MARKER} exit=${{PIPESTATUS[0]}}" | tee -a {logf}\n'
-        'echo "[opus finished — result captured. detach with Ctrl-b then d]"\n'
-        "exec bash\n")
+    # Runscript: opus runs DIRECTLY in the tmux pane (its own PTY) so it's unbuffered
+    # and visible live. A DONE marker is printed to the pane; check_claude reads the
+    # pane via capture-pane (no pipe/redirect that would strip the terminal).
     with open(runf, "w", encoding="utf-8") as fh:
-        fh.write(script)
+        fh.write("#!/usr/bin/env bash\n"
+                 f"cd {wd}\n"
+                 "unset ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN CLAUDE_CODE_USE_BEDROCK "
+                 "CLAUDE_CODE_USE_VERTEX CLAUDE_CODE_USE_FOUNDRY 2>/dev/null || true\n"
+                 f'claude -p "$(cat {taskf})" {brief_arg}{perm}--max-turns {max_turns} --verbose\n'
+                 "rc=$?\n"
+                 f'printf "\\n%s exit=%s\\n" "{_DONE_MARKER}" "$rc"\n'
+                 'echo "[opus finished — detach with Ctrl-b then d]"\n'
+                 "exec bash\n")
     os.chmod(runf, 0o755)
 
     try:
         subprocess.run(["tmux", "new-session", "-d", "-s", sid, "-x", "220", "-y", "50",
                         "bash", runf], check=True, capture_output=True, timeout=20)
+        subprocess.run(["tmux", "set-option", "-t", sid, "history-limit", "200000"],
+                       capture_output=True)
     except FileNotFoundError:
         return "ERROR: tmux is not installed (needed for delegate_claude)."
     except Exception as e:  # noqa: BLE001
         return f"ERROR launching tmux session: {e}"
 
-    _DELEGATIONS[sid] = {"task": task, "log": logf, "record": record}
+    _DELEGATIONS[sid] = {"task": task, "record": record}
     return (f"Delegated to opus in tmux session '{sid}' — running in the background.\n"
             f"  WATCH LIVE:   tmux attach -t {sid}    (detach: Ctrl-b then d)\n"
-            f"  progress log: {logf}\n"
             f"  When it's done, call check_claude('{sid}') for the result.")
 
 
@@ -287,26 +289,25 @@ def check_claude(session: str) -> str:
     """Check a `delegate_claude` tmux session. If opus has FINISHED, returns its output
     (and records it to Context Graph); otherwise returns 'still running' plus a live
     tail of its progress. The human can watch meanwhile: `tmux attach -t <session>`."""
-    import os
     import subprocess
 
-    info = _DELEGATIONS.get(session, {})
-    logf = info.get("log")
-    if not logf or not os.path.exists(logf):
-        return (f"No active delegation '{session}' in this session (or its log is gone). "
-                f"If you have the log path, read it directly.")
-    text = open(logf, encoding="utf-8", errors="replace").read()
+    cap = subprocess.run(["tmux", "capture-pane", "-t", session, "-p", "-S", "-200000"],
+                         capture_output=True, text=True)
+    if cap.returncode != 0:
+        return (f"No live tmux session '{session}' — it may have finished and been cleaned "
+                f"up already, or never started.")
+    text = cap.stdout
     if _DONE_MARKER in text:
         result = text.split(_DONE_MARKER)[0].strip()
+        info = _DELEGATIONS.get(session, {})
         if info.get("record") and result and not info.get("_recorded"):
             _record_outcome(info.get("task", ""), result[-4000:])
             info["_recorded"] = True
-        subprocess.run(["tmux", "kill-session", "-t", session],
-                       capture_output=True)
+        subprocess.run(["tmux", "kill-session", "-t", session], capture_output=True)
         return "DONE — opus finished. Output (tail):\n\n" + result[-6000:]
-    tail = "\n".join(text.splitlines()[-25:])
+    recent = "\n".join([ln for ln in text.splitlines() if ln.strip()][-25:])
     return (f"Still running — opus is working (tmux attach -t {session} to watch live).\n"
-            f"Recent progress:\n\n{tail}")
+            f"Recent progress:\n\n{recent}")
 
 
 @mcp.tool()
