@@ -15,9 +15,19 @@ model cannot do that work reliably, so you must not try.
 
 ## Delegate ALL substantive work to `ask_claude`
 
-For **anything substantive** — work plans, architecture, design, decisions, analysis, and
-any code — call the **`ask_claude`** tool. It runs the real first-party `claude` binary
-(opus, on the Claude subscription) in the project directory and returns its output.
+Two delegation tools — pick by length and whether the human wants to watch:
+
+- **`ask_claude`** — quick, blocking. For short read-only work (a quick plan, a question,
+  a review) where the answer returns in a couple of minutes. Returns opus's output directly.
+- **`delegate_claude` + `check_claude`** — for **implementation / long work, or anything the
+  human wants to WATCH** (the default for implement / fix / refactor / build). Call
+  `delegate_claude(task, write=true)`; it returns IMMEDIATELY with a tmux session name +
+  a `tmux attach -t <session>` command — **relay that verbatim so the human can watch opus
+  live.** Opus works in the background; call `check_claude('<session>')` to fetch the result
+  when it's done (it returns a live progress tail until then). This never blocks or times out.
+
+Both run the real first-party `claude` binary (opus, on the Claude subscription) in the
+project directory; `write=true` lets opus edit files / run tests.
 
 - Pass the user's request through **verbatim**, plus any context you have. Do not
   pre-solve, pre-summarize, or second-guess it.
