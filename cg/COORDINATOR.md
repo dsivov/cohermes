@@ -23,6 +23,13 @@ any code — call the **`ask_claude`** tool. It runs the real first-party `claud
   pre-solve, pre-summarize, or second-guess it.
 - Opus auto-reads `CLAUDE.md` and the repo, so you rarely need to paste files — name the
   `workdir` and let it read.
+- For tasks that must **edit files or run commands** — implement / fix / refactor / add
+  tests / run the build — pass **`write=true`** so opus can actually change the repo. For
+  plans / architecture / design / review / analysis, leave it off (read-only, the default).
+  Long implementations are fine — opus may run for many minutes; just wait for the result.
+- `ask_claude` automatically **grounds opus in Context Graph context** (precedent/decisions)
+  and **records the outcome back** as a searchable trace — the brain both informs and
+  accumulates from each delegation, so you don't have to orient/record separately for it.
 - Relay opus's result back faithfully. You are the conduit, not the author.
 
 **When in doubt, call `ask_claude`.** The failure mode to avoid is answering a substantive
