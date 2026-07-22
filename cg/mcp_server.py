@@ -198,6 +198,102 @@ async def ask_claude(task: str, workdir: str = ".", max_turns: int = 20,
         _ask_claude_blocking, task, workdir, max_turns, record, write)
 
 
+_DONE_MARKER = "___COHERMES_DONE___"
+_DELEGATIONS: dict = {}   # session -> {task, log, record, _recorded}
+
+
+@mcp.tool()
+def delegate_claude(task: str, workdir: str = ".", write: bool = False,
+                    record: bool = True, max_turns: int = 30) -> str:
+    """Delegate to opus (first-party `claude`) in a TMUX SESSION YOU CAN WATCH LIVE —
+    for long or implementation work. Unlike `ask_claude` (which blocks), this returns
+    IMMEDIATELY with the tmux session name; opus keeps working in the background, so
+    there is no blocking and no MCP timeout. The human watches with
+    `tmux attach -t <session>` (detach: Ctrl-b then d). Call **`check_claude(session)`**
+    to fetch the result once it's done. `write=True` lets opus edit files / run tests —
+    use it for implement / fix / refactor. Prefer this over ask_claude for anything the
+    user wants to observe or that may run more than a couple of minutes."""
+    import os
+    import subprocess
+    import time
+
+    wd = os.path.abspath(os.path.expanduser(workdir or "."))
+    work = os.path.join(wd, ".hermes", "cohermes-work")
+    os.makedirs(work, exist_ok=True)
+    sid = "coh-" + str(int(time.time()))
+    taskf = os.path.join(work, sid + ".task")
+    brieff = os.path.join(work, sid + ".brief")
+    logf = os.path.join(work, sid + ".log")
+    runf = os.path.join(work, sid + ".sh")
+
+    with open(taskf, "w", encoding="utf-8") as fh:
+        fh.write(task)
+    try:
+        brief = (_orient.brief(task) or "").strip()
+    except Exception:  # noqa: BLE001
+        brief = ""
+    with open(brieff, "w", encoding="utf-8") as fh:
+        fh.write(("## Team brain (Context Graph) — reuse this, do not re-derive:\n\n" + brief)
+                 if brief else "")
+
+    perm = "--dangerously-skip-permissions " if write else ""
+    brief_arg = f'--append-system-prompt-file "{brieff}" ' if brief else ""
+    # Generate a runscript (no shell-quoting of task/brief — they're read from files).
+    script = (
+        "#!/usr/bin/env bash\n"
+        f"cd {wd}\n"
+        "unset ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN CLAUDE_CODE_USE_BEDROCK "
+        "CLAUDE_CODE_USE_VERTEX CLAUDE_CODE_USE_FOUNDRY 2>/dev/null || true\n"
+        f'claude -p "$(cat {taskf})" {brief_arg}{perm}--max-turns {max_turns} --verbose 2>&1 | tee {logf}\n'
+        f'echo "{_DONE_MARKER} exit=${{PIPESTATUS[0]}}" | tee -a {logf}\n'
+        'echo "[opus finished — result captured. detach with Ctrl-b then d]"\n'
+        "exec bash\n")
+    with open(runf, "w", encoding="utf-8") as fh:
+        fh.write(script)
+    os.chmod(runf, 0o755)
+
+    try:
+        subprocess.run(["tmux", "new-session", "-d", "-s", sid, "-x", "220", "-y", "50",
+                        "bash", runf], check=True, capture_output=True, timeout=20)
+    except FileNotFoundError:
+        return "ERROR: tmux is not installed (needed for delegate_claude)."
+    except Exception as e:  # noqa: BLE001
+        return f"ERROR launching tmux session: {e}"
+
+    _DELEGATIONS[sid] = {"task": task, "log": logf, "record": record}
+    return (f"Delegated to opus in tmux session '{sid}' — running in the background.\n"
+            f"  WATCH LIVE:   tmux attach -t {sid}    (detach: Ctrl-b then d)\n"
+            f"  progress log: {logf}\n"
+            f"  When it's done, call check_claude('{sid}') for the result.")
+
+
+@mcp.tool()
+def check_claude(session: str) -> str:
+    """Check a `delegate_claude` tmux session. If opus has FINISHED, returns its output
+    (and records it to Context Graph); otherwise returns 'still running' plus a live
+    tail of its progress. The human can watch meanwhile: `tmux attach -t <session>`."""
+    import os
+    import subprocess
+
+    info = _DELEGATIONS.get(session, {})
+    logf = info.get("log")
+    if not logf or not os.path.exists(logf):
+        return (f"No active delegation '{session}' in this session (or its log is gone). "
+                f"If you have the log path, read it directly.")
+    text = open(logf, encoding="utf-8", errors="replace").read()
+    if _DONE_MARKER in text:
+        result = text.split(_DONE_MARKER)[0].strip()
+        if info.get("record") and result and not info.get("_recorded"):
+            _record_outcome(info.get("task", ""), result[-4000:])
+            info["_recorded"] = True
+        subprocess.run(["tmux", "kill-session", "-t", session],
+                       capture_output=True)
+        return "DONE — opus finished. Output (tail):\n\n" + result[-6000:]
+    tail = "\n".join(text.splitlines()[-25:])
+    return (f"Still running — opus is working (tmux attach -t {session} to watch live).\n"
+            f"Recent progress:\n\n{tail}")
+
+
 @mcp.tool()
 def whoami() -> str:
     """Report the workspace and developer this agent acts for."""
