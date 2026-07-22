@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cohermes — The Methodology</title>
+<style>
+:root{--bg:#0f1117;--panel:#1b1f2a;--panel2:#222736;--ink:#e7ebf3;--ink-soft:#aab3c5;--ink-faint:#7b8499;
+--line:#2c3346;--line-soft:#232a3a;--a:#5b8def;--b:#19b89a;--c:#f0a73c;--ctrl:#22c3d6;--ok:#3ecf8e;--danger:#ef5b6e;
+--mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;--maxw:1080px;--radius:14px;
+--shadow:0 10px 30px rgba(0,0,0,.35);}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(1100px 600px at 82% -10%,rgba(34,195,214,.10),transparent 60%),
+radial-gradient(900px 520px at -10% 8%,rgba(25,184,154,.08),transparent 55%),var(--bg);
+color:var(--ink);font:16px/1.7 "Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif}
+a{color:var(--a);text-decoration:none}a:hover{text-decoration:underline}
+code,pre,.mono{font-family:var(--mono)}svg{max-width:100%;height:auto}
+.hero{padding:64px 22px 30px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(34,195,214,.07),transparent)}
+.hero-inner{max-width:880px;margin:0 auto}
+.eyebrow{letter-spacing:.22em;text-transform:uppercase;font-size:12px;color:var(--ink-faint);font-weight:700}
+.hero h1{font-size:clamp(30px,5vw,48px);margin:.3em 0 .2em;background:linear-gradient(92deg,#bdf0ea,#8fb4d9 55%,#a7ecf5);
+-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{font-size:clamp(16px,2vw,20px);color:var(--ink-soft)}
+.layout{max-width:var(--maxw);margin:0 auto;display:grid;grid-template-columns:220px 1fr;gap:38px;padding:28px 22px 90px}
+nav.toc{position:sticky;top:16px;align-self:start;max-height:calc(100vh - 32px);overflow:auto;border:1px solid var(--line);
+border-radius:var(--radius);background:var(--panel);padding:12px}
+nav.toc .tl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin:4px 6px 8px}
+nav.toc ol{list-style:none;margin:0;padding:0;counter-reset:t}nav.toc li{counter-increment:t}
+nav.toc a{display:flex;gap:8px;padding:5px 8px;border-radius:8px;color:var(--ink-soft);font-size:13px}
+nav.toc a::before{content:counter(t,decimal-leading-zero);color:var(--ink-faint);font-family:var(--mono);font-size:11px}
+nav.toc a:hover{background:var(--panel2);color:var(--ink);text-decoration:none}
+main{min-width:0;max-width:760px}section{margin:0 0 46px;scroll-margin-top:18px}
+h2{font-size:clamp(21px,3vw,28px);margin:0 0 6px}h3{font-size:18px;margin:24px 0 6px}
+.kick{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ctrl);font-weight:700;margin-bottom:6px}
+p{margin:.6em 0}.small{font-size:13.5px;color:var(--ink-faint)}
+ul,ol{padding-left:20px}li{margin:.28em 0}
+pre{background:#0c0e14;border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow:auto;font-size:13px;line-height:1.55}
+pre code{color:#d6deec}.cm{color:#5c6685}.kw{color:#7aa2f7}.str{color:#9ece6a}
+code:not(pre code){background:#161922;border:1px solid var(--line-soft);border-radius:5px;padding:1px 5px;font-size:13px}
+.callout{border-radius:12px;padding:13px 15px;border:1px solid var(--line);background:var(--panel2);margin:16px 0}
+.callout .cl{font-weight:700;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+.callout.key{border-color:rgba(34,195,214,.55);background:rgba(34,195,214,.10)}.callout.key .cl{color:#8fe6f2}
+.callout.ok{border-color:rgba(62,207,142,.5);background:rgba(62,207,142,.08)}.callout.ok .cl{color:#7ee3b4}
+.callout.warn{border-color:rgba(240,167,60,.5);background:rgba(240,167,60,.08)}.callout.warn .cl{color:#ffce86}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px;margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th{background:var(--panel2);text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--ink-soft)}
+td{padding:9px 11px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+.fig{background:#12151d;border:1px solid var(--line-soft);border-radius:12px;padding:15px;margin:16px 0}
+.fig .cap{font-size:12.5px;color:var(--ink-faint);margin-top:9px}
+.step{display:inline-block;background:rgba(34,195,214,.16);color:#8fe6f2;border:1px solid rgba(34,195,214,.4);
+border-radius:999px;font-size:12px;font-weight:700;padding:1px 10px;margin-right:8px}
+.pill{display:inline-block;border-radius:999px;font-size:11.5px;font-weight:700;padding:1px 9px;border:1px solid var(--line)}
+.pill.i{background:rgba(34,195,214,.15);color:#8fe6f2;border-color:rgba(34,195,214,.4)}
+.pill.d{background:rgba(240,167,60,.14);color:#ffce86;border-color:rgba(240,167,60,.4)}
+.footer{max-width:var(--maxw);margin:0 auto;padding:26px 22px 60px;color:var(--ink-faint);font-size:13px;border-top:1px solid var(--line)}
+@media(max-width:900px){.layout{grid-template-columns:1fr}nav.toc{display:none}main{max-width:none}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="hero-inner">
+  <div class="eyebrow">cohermes · methodology</div>
+  <h1>Your design-first loop, in cohermes</h1>
+  <p class="lede">Discuss → agree → architect → plan → code. cohermes doesn't replace that
+  loop — it carries its artifacts in the shared brain, keeps the thinking interactive, and
+  delegates only the execution to opus, where you can watch it work.</p>
+</div></header>
+
+<div class="layout">
+<nav class="toc"><div class="tl">Contents</div><ol>
+  <li><a href="#loop">The loop you use</a></li>
+  <li><a href="#principle">Delegate the coding, not the design</a></li>
+  <li><a href="#phases">Phase by phase</a></li>
+  <li><a href="#brain">CG — the connective tissue</a></li>
+  <li><a href="#watch">Watching the execution</a></li>
+  <li><a href="#roles">The two roles</a></li>
+  <li><a href="#example">Worked example</a></li>
+  <li><a href="#ref">Quick reference</a></li>
+</ol></nav>
+
+<main>
+
+<section id="loop">
+  <div class="kick">the starting point</div>
+  <h2>The loop you already use</h2>
+  <p>Your development methodology is <b>design-first and human-in-the-loop</b>:</p>
+  <ol>
+    <li><b>Discuss</b> — we open an illustrated <b>HTML discussion doc</b> and think out loud in it.</li>
+    <li><b>Iterate → agree</b> — a few rounds until the shape is right.</li>
+    <li><b>Architecture &amp; work plan</b> — we write the arch docs and a concrete plan.</li>
+    <li><b>Code</b> — only then do we build.</li>
+  </ol>
+  <p>The value is in the <em>first three steps</em> — the shared understanding — and the coding
+  is the (comparatively mechanical) payoff. The question is how to keep that when the "developer"
+  is now a coordinator delegating to opus over a one-shot call.</p>
+</section>
+
+<section id="principle">
+  <div class="kick"><span class="step">key</span>the principle</div>
+  <h2>Delegate the coding — not the design</h2>
+  <p>A one-shot <code>claude -p</code> is the wrong tool for a <em>discussion</em>: that phase is
+  creative, iterative, and human-in-the-loop — it needs you and opus going back and forth, exactly
+  like your loop today. So the split is <b>by phase, not by tool</b>:</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Phase</th><th>Mode</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Discuss · iterate · agree</td><td><span class="pill i">interactive</span></td><td>creative, back-and-forth, yours to steer</td></tr>
+      <tr><td>Architecture · work plan</td><td><span class="pill i">interactive</span></td><td>still a conversation — you shape it</td></tr>
+      <tr><td>Code · execute</td><td><span class="pill d">delegated</span></td><td>executing an <em>already-agreed</em> plan</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout key"><div class="cl">The one idea</div>
+  cohermes keeps the thinking interactive and makes the <b>shared brain (Context Graph)</b> carry
+  each phase's artifacts — the discussion doc, the decisions, the work plan — so every later step,
+  and every teammate, builds on the same agreed context instead of re-deriving it.</div>
+</section>
+
+<section id="phases">
+  <div class="kick"><span class="step">flow</span>the mapping</div>
+  <h2>Phase by phase in cohermes</h2>
+
+  <div class="fig">
+  <svg viewBox="0 0 720 250" role="img" aria-label="the methodology loop around Context Graph">
+    <defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#5b8def"/></marker></defs>
+    <!-- CG center -->
+    <circle cx="360" cy="125" r="58" fill="#12211f" stroke="#19b89a"/>
+    <text x="360" y="118" text-anchor="middle" fill="#7ee3b4" font-size="13" font-weight="700">Context Graph</text>
+    <text x="360" y="136" text-anchor="middle" fill="#7b8499" font-size="10.5">docs · decisions · tasks</text>
+    <!-- phase nodes around it -->
+    <g font-size="12" font-weight="700" text-anchor="middle">
+      <rect x="250" y="14" width="220" height="40" rx="10" fill="#161b28" stroke="#22c3d6"/>
+      <text x="360" y="33" fill="#8fe6f2">1 · Discuss (HTML doc)</text><text x="360" y="47" fill="#7b8499" font-weight="400" font-size="9.5">interactive → ingest to CG</text>
+      <rect x="516" y="105" width="196" height="40" rx="10" fill="#161b28" stroke="#22c3d6"/>
+      <text x="614" y="124" fill="#8fe6f2">2 · Architect + plan</text><text x="614" y="138" fill="#7b8499" font-weight="400" font-size="9.5">interactive → ADRs + Tasks</text>
+      <rect x="250" y="196" width="220" height="40" rx="10" fill="#161b28" stroke="#f0a73c"/>
+      <text x="360" y="215" fill="#ffce86">3 · Code (delegate + watch)</text><text x="360" y="229" fill="#7b8499" font-weight="400" font-size="9.5">opus, grounded in CG → outcome to CG</text>
+      <rect x="8" y="105" width="196" height="40" rx="10" fill="#161b28" stroke="#2c3346"/>
+      <text x="106" y="124" fill="#aab3c5">teammates' agents</text><text x="106" y="138" fill="#7b8499" font-weight="400" font-size="9.5">read the same brain</text>
+    </g>
+    <g stroke="#5b8def" stroke-width="1.5" fill="none">
+      <line x1="360" y1="56" x2="360" y2="64" marker-end="url(#ar)"/>
+      <line x1="516" y1="125" x2="422" y2="125" marker-end="url(#ar)"/>
+      <line x1="360" y1="186" x2="360" y2="196" marker-end="url(#ar)" stroke="#f0a73c"/>
+      <line x1="204" y1="125" x2="298" y2="125" marker-end="url(#ar)"/>
+    </g>
+  </svg>
+  <div class="cap">Each phase writes to CG; each next phase (and each teammate) reads from it. The brain is the loop's memory.</div>
+  </div>
+
+  <p><span class="step">1</span><b>Discuss.</b> Work <b>interactively</b> with opus (the Claude Code
+  flavor, or `cohermes agent`) to produce the illustrated HTML discussion doc — the same as your
+  loop today. When it settles, <b>ingest it into CG</b> (so it's retrievable) and record the key
+  decisions as they land.</p>
+  <p><span class="step">2</span><b>Architecture &amp; work plan.</b> Still interactive. Capture the
+  architecture, and record the plan as <b>governed artifacts</b> — ADRs (the <em>why</em>) and a set
+  of <b>Tasks</b> (the <em>what</em>) — via the workspace's governed actions. Now the plan is shared,
+  queryable state, not a doc someone has to remember.</p>
+  <p><span class="step">3</span><b>Code.</b> Delegate execution to opus. For a quick change use
+  <code>ask_claude</code>; for a real implementation you want to <b>watch</b>, use
+  <code>delegate_claude(write=true)</code> (§5). Opus is <b>grounded in the CG artifacts</b> from
+  steps 1–2 — it reuses the agreed decisions instead of re-deriving — and its outcome is recorded
+  back to CG.</p>
+</section>
+
+<section id="brain">
+  <div class="kick"><span class="step">why CG</span>the substrate</div>
+  <h2>Context Graph is the connective tissue</h2>
+  <p>What makes this a <em>loop</em> rather than four disconnected steps is that every artifact lives
+  in one shared, queryable place:</p>
+  <ul>
+    <li>the <b>discussion doc</b> → ingested prose (retrievable context);</li>
+    <li>the <b>decisions</b> → ADRs / decision traces (precedent-searchable);</li>
+    <li>the <b>work plan</b> → Tasks with state.</li>
+  </ul>
+  <p>So when the coding phase runs, opus is handed the relevant precedent automatically (the
+  delegation tools inject a CG brief and record the outcome back — see
+  <a href="CONTEXT_ARCHITECTURE.html">How Context Works</a>). A teammate picking up the next task
+  reads the same brain. Nothing agreed is lost, and nothing is re-litigated.</p>
+</section>
+
+<section id="watch">
+  <div class="kick"><span class="step">§5</span>observability</div>
+  <h2>Watching the execution — you're never blind</h2>
+  <p>The gap in a plain <code>-p</code> delegation is that it's opaque. cohermes closes it with a
+  <b>tmux delegation</b>: opus runs in a session you can attach to and watch in real time.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>You want to see…</th><th>How</th></tr></thead>
+    <tbody>
+      <tr><td>Opus working live — its reasoning, tool calls, todo list</td><td><code>delegate_claude(...)</code> → <code>tmux attach -t &lt;session&gt;</code></td></tr>
+      <tr><td>Which files it edited</td><td>the tmux stream (Edit/Write calls) · or <code>watch -n2 git status</code></td></tr>
+      <tr><td>Which task is in progress</td><td>opus's <code>TodoWrite</code> in the tmux stream</td></tr>
+      <tr><td>The result when it's done</td><td><code>check_claude('&lt;session&gt;')</code> (also records it to CG)</td></tr>
+      <tr><td>The decision/task history</td><td>the CG WebUI, or <code>search_precedents</code> / <code>orient</code></td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout ok"><div class="cl">Non-blocking too</div>
+  Because <code>delegate_claude</code> returns immediately and opus runs in the background, a long
+  implementation never blocks the session or trips a timeout — you delegate, watch, and check back.</div>
+</section>
+
+<section id="roles">
+  <div class="kick">who does what</div>
+  <h2>The two roles behind it</h2>
+  <p>Under the hood, execution uses the coordinator + worker split (see
+  <a href="SETUP.html#coordinator">Setup</a>):</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Role</th><th>Runs on</th><th>Does</th></tr></thead>
+    <tbody>
+      <tr><td><b>Coordinator</b></td><td>a cheap model (local / Bedrock)</td><td>routes, talks to CG, delegates — and relays the <code>tmux attach</code> line to you</td></tr>
+      <tr><td><b>Worker</b></td><td><b>opus</b> — the real <code>claude</code> binary</td><td>all the actual design/plan/code, first-party (plan limits)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small">For the <em>design</em> phases you can skip the coordinator entirely and talk to opus
+  directly (the Claude Code flavor) — the coordinator earns its keep on the delegated execution.</p>
+</section>
+
+<section id="example">
+  <div class="kick"><span class="step">example</span>end to end</div>
+  <h2>Worked example — a feature, the cohermes way</h2>
+  <ol>
+    <li><b>Discuss.</b> Interactively, you and opus write
+      <code>docs/provenance-origin-tracing-discussion.html</code> — trace each claim to its earliest
+      source, grade the origin by trust. Iterate until agreed; ingest the doc into CG.</li>
+    <li><b>Agree &amp; record.</b> Record the ADRs (e.g. <em>build it as a read-time extension of
+      <code>corroboration.py</code></em>) and the work plan as Tasks in CG.</li>
+    <li><b>Code.</b> Ask the coordinator to implement it. It calls
+      <code>delegate_claude(task, write=true)</code> and hands you
+      <code>tmux attach -t coh-…</code>. You attach and watch opus — grounded in the recorded
+      decisions — create <code>graph/provenance.py</code>, wire it in, add tests. When it finishes,
+      <code>check_claude</code> relays the summary and records the outcome to CG.</li>
+    <li><b>Next.</b> The recorded decision + outcome now feed the next task's <code>orient</code> —
+      for you or a teammate.</li>
+  </ol>
+</section>
+
+<section id="ref">
+  <div class="kick">cheat sheet</div>
+  <h2>Quick reference</h2>
+  <pre><code><span class="cm"># DESIGN phases — interactive opus (like your loop today), then record to CG</span>
+cd project &amp;&amp; claude            <span class="cm"># discuss the HTML doc, architect, plan — iterate</span>
+<span class="cm"># … then have it ingest the doc + record ADRs/Tasks to Context Graph</span>
+
+<span class="cm"># EXECUTION phase — delegate + watch</span>
+<span class="cm"># (through the coordinator; it will call these for you)</span>
+delegate_claude(task, write=true)   <span class="cm"># launches opus in tmux, returns a session name</span>
+tmux attach -t coh-&lt;id&gt;              <span class="cm"># watch opus work live (detach: Ctrl-b then d)</span>
+check_claude("coh-&lt;id&gt;")            <span class="cm"># fetch the result when done (records it to CG)</span>
+ask_claude(task)                    <span class="cm"># quick, blocking — for short read-only work</span></code></pre>
+</section>
+
+</main>
+</div>
+<footer class="footer">cohermes — the methodology · companion to
+<code>docs/USER_MANUAL.html</code>, <code>docs/SETUP.html</code>, and
+<code>docs/CONTEXT_ARCHITECTURE.html</code>.</footer>
+</body>
+</html>
