@@ -220,11 +220,26 @@ def delegate_claude(task: str, workdir: str = ".", write: bool = False,
     wd = os.path.abspath(os.path.expanduser(workdir or "."))
     work = os.path.join(wd, ".hermes", "cohermes-work")
     os.makedirs(work, exist_ok=True)
-    sid = "coh-" + str(int(time.time()))
+    # SINGLE-FLIGHT + predictable name: ONE delegation per project, named after it.
+    # A confused coordinator that re-calls gets the SAME session back — never a
+    # duplicate/runaway — and the human always knows how to attach.
+    proj = "".join(c if (c.isalnum() or c in "-_") else "-"
+                   for c in os.path.basename(wd)) or "project"
+    sid = "cohermes-" + proj
     taskf = os.path.join(work, sid + ".task")
     brieff = os.path.join(work, sid + ".brief")
     logf = os.path.join(work, sid + ".log")
     runf = os.path.join(work, sid + ".sh")
+
+    if subprocess.run(["tmux", "has-session", "-t", sid],
+                      capture_output=True).returncode == 0:
+        done = (os.path.exists(logf)
+                and _DONE_MARKER in open(logf, encoding="utf-8", errors="replace").read())
+        if not done:
+            return (f"A delegation is ALREADY running in tmux session '{sid}'. Do NOT start "
+                    f"another — watch it: `tmux attach -t {sid}` — and call `check_claude('{sid}')` "
+                    f"for its result. One delegation per project at a time.")
+        subprocess.run(["tmux", "kill-session", "-t", sid], capture_output=True)  # finished — recycle
 
     with open(taskf, "w", encoding="utf-8") as fh:
         fh.write(task)
